@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Socket.IO Test Client</title>
+    <!-- Usar CDN como solución temporal si el servidor no sirve socket.io.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+    <script type="module">
+        // Ajustar la ruta relativa para common.js
+        import { CLIENT_EVENTS, SERVER_EVENTS } from "../shared/common.js";
+
+        // Conectar al servidor en el puerto 5050
+        const socket = io("http://localhost:3000");
+
+        // Manejar la conexión
+        socket.on("connect", () => {
+            console.log("✅ Conectado al servidor:", socket.id);
+        });
+
+        // Escuchar todos los eventos del servidor para depuración
+        socket.onAny((event, ...args) => {
+            console.log("📩 Evento recibido:", event, args);
+        });
+
+        // Funciones para enviar eventos
+        function createRoom() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            if (user && room) {
+                socket.emit(CLIENT_EVENTS.CREATE_ROOM, user, room);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario y una sala");
+            }
+        }
+
+        function connectRoom() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            if (user && room) {
+                socket.emit(CLIENT_EVENTS.CONNECT, user, room);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario y una sala");
+            }
+        }
+
+        function startGame() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            if (user && room) {
+                socket.emit(CLIENT_EVENTS.START_GAME, user, room);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario y una sala");
+            }
+        }
+
+        function sendAnswer() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            const answer = document.getElementById("answer").value;
+            if (user && room && answer) {
+                socket.emit(CLIENT_EVENTS.ANSWER, user, room, answer);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario, una sala y una respuesta");
+            }
+        }
+
+        function closeGame() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            if (user && room) {
+                socket.emit(CLIENT_EVENTS.CLOSE_GAME, user, room);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario y una sala");
+            }
+        }
+
+        function leaveRoom() {
+            const user = document.getElementById("user").value;
+            const room = document.getElementById("room").value;
+            if (user && room) {
+                socket.emit(CLIENT_EVENTS.DISCONNECT, user, room);
+            } else {
+                console.log("⚠️ Por favor, ingresa un usuario y una sala");
+            }
+        }
+
+        // Exponer funciones al ámbito global
+        window.createRoom = createRoom;
+        window.connectRoom = connectRoom;
+        window.startGame = startGame;
+        window.sendAnswer = sendAnswer;
+        window.closeGame = closeGame;
+        window.leaveRoom = leaveRoom;
+    </script>
+</head>
+
+<body>
+    <h1>Tester de Socket.IO</h1>
+    <label>Usuario: <input id="user" value="player1"></label><br>
+    <label>Sala: <input id="room" value="room1"></label><br>
+    <label>Respuesta: <input id="answer" value="42"></label><br><br>
+
+    <button onclick="createRoom()">Crear Sala</button>
+    <button onclick="connectRoom()">Unirse a Sala</button>
+    <button onclick="startGame()">Iniciar Juego</button>
+    <button onclick="sendAnswer()">Enviar Respuesta</button>
+    <button onclick="leaveRoom()">Salir de Sala</button>
+    <button onclick="closeGame()">Cerrar Juego</button>
+
+    <div id="log" style="margin-top: 20px; color: #333;"></div>
+    <script>
+        console.logOriginal = console.log.bind(console);
+        console.log = function (...message) {
+            logMessage(message);
+            console.logOriginal(message);
+        };
+
+        function logMessage(...message) {
+            const logDiv = document.getElementById("log");
+            logDiv.innerHTML += `<p>${new Date().toLocaleTimeString()} - ${message}</p>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+
+</body>
+
+</html>
