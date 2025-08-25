@@ -1,4 +1,5 @@
 import express from "express";
+import { connectDB } from "./db.js"
 import { Question, User } from "./models.js"
 
 
@@ -12,10 +13,12 @@ app.listen(app.get("port"), () => {
     console.log(`Server running on port ${app.get("port")}`);
 });
 
+await connectDB();
 
 app.post('/', (req, res) => {
     res.send('<h1>Hello, Express.js Server!</h1>');
 });
+
 
 // * END-POINTS
 
@@ -28,15 +31,6 @@ app.get("/api/questions", async (req, res) => {
     const questions = await Question.find();
     res.json(questions);
 })
-
-/**
- * Return a question by name
- */
-app.get("/api/questions/:name", async (req, res) => {
-    const questions = await Question.find({ name: req.params.name });
-    res.json(questions);
-})
-
 
 
 // ? POST
