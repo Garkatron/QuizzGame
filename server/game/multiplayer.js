@@ -1,6 +1,6 @@
-import { CLIENT_EVENTS, SERVER_EVENTS } from "../shared/common.js";
+import { CLIENT_EVENTS, SERVER_EVENTS } from "../../shared/common.js";
 import Room from "./room.js";
-import { Question, User } from "./models.js"
+import { Question, User } from "../db/models.js"
 
 let rooms = {};
 const exists_room = (room_name) => rooms[room_name] || null;

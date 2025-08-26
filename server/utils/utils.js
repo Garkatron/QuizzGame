@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
-import { PASSWORD_SALT_ROUNDS, REGEX_EMAIL, REGEX_PASSWORD } from "./constants.js"
+import { EMAIL_TAKEN, INVALID_NAME, INVALID_PASSWORD, PASSWORD_SALT_ROUNDS, REGEX_EMAIL, REGEX_PASSWORD, REGEX_PASSWORD_SIMPLE, USER_EXISTS, USER_NOT_EXISTS } from "../constants.js"
+import { INVALID_EMAIL } from "../constants.js"
+import { User } from "../db/models.js";
 
 // * PASSWORD
 
@@ -45,31 +47,72 @@ export async function compare_password(password, hash) {
     }
 }
 
+// * DB
+
+export async function user_not_exists(name) {
+    const user = await User.findOne({ name });
+    if (user) throw new Error(USER_EXISTS);
+}
+
+export async function user_exists(name) {
+    const user = await User.findOne({ name });
+    if (!user) throw new Error(USER_NOT_EXISTS);
+}
+
+export async function does_user_exist(name) {
+    const user = await User.findOne({ name });
+    return !!user;
+}
+
+export async function email_not_used(email) {
+    const user = await User.findOne({ email });
+    if (user) throw new Error(EMAIL_TAKEN);
+}
+
+export async function is_email_used(email) {
+    const user = await User.findOne({ email });
+    return !!user;
+}
+
 // * STRING
 
-export function validate_string(str) {
+
+export function is_valid_string(str) {
     return typeof str === "string" && str.trim().length > 0;
 }
 
-export function validate_name(name) {
-    return validate_string(name);
+/**
+ * If the name isn't valid, trows and exception
+ * @param {string} name 
+ */
+export function has_valid_name(name) {
+    if (!is_valid_string(name)) throw new Error(INVALID_NAME);
 }
 
-export function validate_password(password) {
-    return validate_string(password) && REGEX_PASSWORD.test(password);
+/**
+ * If the password isn't valid, trows and exception
+ * @param {string} password 
+ */
+export function has_valid_password(password) {
+    if (!is_valid_string(password) || !REGEX_PASSWORD_SIMPLE.test(password)) throw new Error(INVALID_PASSWORD);
 }
 
-export function validate_email(email) {
-    return validate_string(email) && REGEX_EMAIL.test(email);
+
+/**
+ * If the email isn't valid, trows and exception
+ * @param {string} email 
+ */
+export function has_valid_email(email) {
+    if (!is_valid_string(email) || !REGEX_EMAIL.test(email)) throw new Error(INVALID_EMAIL);
 }
 
 // * RESPONSES
 
-export function send_response_unsuccessful(res, message, errors = []) {
+export function send_response_unsuccessful(res, message, error) {
     return res.status(400).json({
         success: false,
         message,
-        errors
+        error
     });
 }
 
