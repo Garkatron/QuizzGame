@@ -1,61 +1,70 @@
-# Requisitos del Proyecto: Web App "Quiz Game"
+# QuizzGame
 
-## 1. Descripción del Proyecto
-Una aplicación web interactiva tipo "Quiz Game" que permite a los usuarios:
-- Registrarse e iniciar sesión.
-- Responder preguntas de diferentes categorías y niveles de dificultad.
-- Visualizar su puntuación y progreso.
-- Acceder a un historial de juegos anteriores.
+QuizzGame is a quiz game with support for **singleplayer and online multiplayer**, developed with React on the frontend and Node.js/Express on the backend.
 
-La app utilizará **Remix JS** para la estructura y routing, **Redux** para el manejo del estado global y **Bulma CSS** para el diseño y estilo responsive.
+[Spanish README.md](./ES.README.md)
 
----
+## Technologies
 
-## 2. Requisitos Funcionales
+**Frontend:**
 
-### 2.1 Gestión de Usuario
-- Registro de usuario con correo electrónico y contraseña.
-- Inicio y cierre de sesión seguro.
-- Perfil de usuario con historial de juegos y puntuaciones.
+* React
+* React Router
+* Bulma CSS
+* JavaScript
 
-### 2.2 Juego de Quiz
-- Selección de categorías (ej. Historia, Ciencia, Tecnología).
-- Preguntas aleatorias con opciones múltiples.
-- Validación inmediata de respuestas.
-- Sistema de puntuación basado en aciertos y velocidad.
-- Feedback visual después de cada respuesta (correcta/incorrecta).
+**Backend:**
 
-### 2.3 Tablero y Estadísticas
-- Visualización de puntuación total y promedio.
-- Ranking de los mejores jugadores.
-- Historial de partidas por usuario.
+* Node.js
+* Express
+* dotenv
+* bcryptjs (for password hashing)
+* MongoDB + Mongoose
+* JSON Web Tokens (JWT) for authentication
+* Custom permissions for CRUD access
+* Socket.io for real-time game logic
 
----
+**Testing:**
 
-## 3. Requisitos No Funcionales
-- Aplicación **responsive**, compatible con escritorio y móvil.
-- Rendimiento óptimo, con carga rápida de preguntas y recursos.
-- Seguridad en autenticación y almacenamiento de datos.
-- Código modular y escalable utilizando **Remix JS** y **Redux**.
+* Babel
+* Mocha
+* Pactum
+* MongoDB Memory Server
 
----
+## Project Status
 
-## 4. Tecnologías Requeridas
-- **Frontend:**
-  - [Remix JS](https://remix.run/) (Routing y server-side rendering)
-  - [Redux](https://redux.js.org/) (Gestión del estado global)
-  - [Bulma CSS](https://bulma.io/) (Diseño y estilo)
-  - JavaScript (ES6+)
-  - HTML5 y CSS3
+### Frontend
 
-- **Backend / API:**
-  - Puede integrarse con un backend en Node.js o consumir APIs externas de preguntas de quiz.
-  - Autenticación JWT o sesiones seguras.
+* [x] Welcome
+* [x] Login
+* [x] Register
+* [ ] Singleplayer
+* [ ] Online after login
 
-- **Base de Datos:**
-  - Relacional (PostgreSQL, MySQL) o NoSQL (MongoDB)
-  - Guardar usuarios, preguntas y resultados de partidas.
+### Backend
 
----
+* [x] Node.js + Express
+* [x] dotenv configured
+* [x] bcryptjs for passwords
+* [x] Basic Socket.io logic
+* [ ] Polish game logic
+* [x] CRUD with JWT and permissions
+* [x] MongoDB + Mongoose configured
 
-## 5. Arquitectura y Estructura de Archivos (Sugerida)
+### Testing
+
+* [x] Tests for permissions and tokens
+* [x] Part of CRUD tested
+* [ ] Game logic tests
+* [ ] Frontend routes tests (if applicable)
+
+## Next tasks
+
+* [ ] Implement Singleplayer in frontend
+* [ ] Enable Online play after login
+* [ ] Complete game logic in backend
+* [ ] Improve validations and error handling in backend
+* [ ] Complete missing tests (CRUD, game logic, frontend)
+* [ ] Document backend endpoints
+* [ ] Improve UI and styling in frontend
+
