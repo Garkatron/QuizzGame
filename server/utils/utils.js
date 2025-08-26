@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { EMAIL_TAKEN, INVALID_NAME, INVALID_PASSWORD, PASSWORD_SALT_ROUNDS, REGEX_EMAIL, REGEX_PASSWORD, REGEX_PASSWORD_SIMPLE, USER_EXISTS, USER_NOT_EXISTS } from "../constants.js"
 import { INVALID_EMAIL } from "../constants.js"
 import { User } from "../db/models.js";
+import jwt from "jsonwebtoken";
 
 // * PASSWORD
 
@@ -108,7 +109,7 @@ export function has_valid_email(email) {
 
 // * RESPONSES
 
-export function send_response_unsuccessful(res, message, error) {
+export function send_response_unsuccessful(res, message = "", error) {
     return res.status(400).json({
         success: false,
         message,
@@ -138,4 +139,14 @@ export function send_response_not_found(res, message, errors = []) {
         message: message,
         errors: errors
     });
+}
+
+// Tokens
+
+export function generate_access_token(user_name, user_permissions) {
+    if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not definied");
+    return jwt.sign({
+        name: user_name,
+        permissions: user_permissions
+    }, process.env.JWT_SECRET, { expiresIn: "1h" });
 }

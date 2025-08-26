@@ -1,17 +1,13 @@
 import { Question, User } from "../db/models.js"
-import { compare_password, send_response_failed_at, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, user_not_exists, does_user_exist, is_valid_string } from "../utils/utils.js"
-import { INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_STRING, MIN_OPTIONS, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, UserPermissions } from "../constants.js"
+import { compare_password, send_response_failed_at, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, user_not_exists, does_user_exist, is_valid_string, generate_access_token } from "../utils/utils.js"
+import { INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_STRING, MIN_OPTIONS, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_NOT_EXISTS, UserPermissions } from "../constants.js"
+import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
 
 export default function MakeEndpoints(app) {
 
     app.post('/', (req, res) => {
         res.send('<h1>Hello, Express.js Server!</h1>');
-    });
-
-    app.get("/api/questions", async (req, res) => {
-        const questions = await Question.find();
-        res.json(questions);
     });
 
     app.post("/api/auth/register", async (req, res) => {
@@ -47,8 +43,9 @@ export default function MakeEndpoints(app) {
         try {
             const { name, password } = req.body;
 
-            if (!does_user_exist(name)) {
-                return send_response_not_found(res, "Not found user", [NOT_FOUND_USER])
+            const user = await User.findOne({ name });
+            if (!user) {
+                return send_response_not_found(res, "Not found user", [NOT_FOUND_USER]);
             }
 
             const isMatch = await compare_password(password, user.password);
@@ -56,17 +53,22 @@ export default function MakeEndpoints(app) {
                 return send_response_unsuccessful(res, "Bad password", [INVALID_PASSWORD]);
             }
 
-            return send_response_successful(res, "User exists", user);
+            const accessToken = generate_access_token(name, user.permissions);
+
+            return send_response_successful(res, "Login successful", {
+                user: { id: user._id, name: user.name, email: user.email },
+                accessToken
+            });
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error searching user", error);
+            return send_response_unsuccessful(res, "Error searching user", [error.message]);
         }
     });
 
 
-    app.post("/api/auth/delete", async (req, res) => {
+    app.post("/api/auth/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), async (req, res) => {
         try {
-            const { name, password } = req.body;
+            const { name } = req.body;
 
             has_valid_name(name);
 
@@ -74,7 +76,7 @@ export default function MakeEndpoints(app) {
                 return send_response_not_found(res, "Not found user", [NOT_FOUND_USER])
             }
 
-            has_valid_password(password);
+            // has_valid_password(password);
 
             const user = await User.findOne({ name });
             if (!user) {
@@ -85,23 +87,52 @@ export default function MakeEndpoints(app) {
                 });
             }
 
-            const isMatch = await compare_password(password, user.password);
-            if (!isMatch) {
-                return send_response_unsuccessful(res, "Bad password", [INVALID_PASSWORD]);
-            }
+            // const isMatch = await compare_password(password, user.password);
+            // if (!isMatch) {
+            //    return send_response_unsuccessful(res, "Bad password", [INVALID_PASSWORD]);
+            // }
 
             const deleted = await User.deleteOne({ name: user.name })
-            return send_response_successful(res, "User deleted succefully", deleted);
+            return send_response_successful(res, "User deleted successfully", deleted);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at deleting user", error);
+            return send_response_unsuccessful(res, "Error at deleting user", [error.message]);
         }
     });
 
 
+    app.post("/api/auth/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), async (req, res) => {
+        try {
+            const { name, field, value } = req.body;
+
+            const allowedFields = ["email", "password", "permissions"];
+            if (!allowedFields.includes(field)) {
+                return send_response_unsuccessful(res, "Invalid field", ["Field not editable"]);
+            }
+
+            const user = await User.findOne({ name });
+            if (!user) return send_response_unsuccessful(res, "This User doesn't exist", [USER_NOT_EXISTS]);
+
+            // Validaciones
+            if (field === "email") has_valid_email(value);
+            if (field === "password") {
+                const hashed = await hash_password(value);
+                await user.updateOne({ password: hashed });
+            } else {
+                await user.updateOne({ [field]: value });
+            }
+
+            const updatedUser = await User.findOne({ name }); // Traer datos actualizados
+            return send_response_successful(res, "User edited successfully", updatedUser);
+
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error at editing User", [error.message]);
+        }
+    });
+
     // QUESTION CRUD
 
-    app.post("/api/question/delete", async (req, res) => {
+    app.post("/api/question/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), async (req, res) => {
         try {
             const { id } = req.body;
 
@@ -117,7 +148,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-    app.post("/api/question/edit", async (req, res) => {
+    app.post("/api/question/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]), async (req, res) => {
         try {
             const { id, field, value } = req.body;
 
@@ -140,7 +171,7 @@ export default function MakeEndpoints(app) {
 
 
 
-    app.post("/api/question/create", async (req, res) => {
+    app.post("/api/question/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_QUESTION]), async (req, res) => {
         try {
             const { question_text, options, answer } = req.body;
 
@@ -170,16 +201,14 @@ export default function MakeEndpoints(app) {
     });
 
 
-
-
     // Questions
 
     app.get("/api/questions", async (req, res) => {
         try {
             const questions = await Question.find();
             return send_response_successful(res, "Questions", questions);
-        } catch (err) {
-            return send_response_unsuccessful(res, "Error retrieving questions", err);
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error retrieving questions", [error.message]);
         }
     });
 
