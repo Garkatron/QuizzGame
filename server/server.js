@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import MultiplayerLogic from "./game/multiplayer.js"
 import { SERVER_PORT } from "./constants.js";
-import { dotenv } from "dotenv";
+import dotenv from "dotenv";
 import { doesNotMatch } from "assert";
 
 dotenv.config();
