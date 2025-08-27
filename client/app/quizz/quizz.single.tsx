@@ -5,7 +5,8 @@ export function SingleplayerQuizz() {
     const [questions, setQuestions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-
+    const [feedbackClass, setFeedbackClass] = useState("");
+    const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
     const randomQuestionNumber = (l: number) => Math.floor(Math.random() * l);
 
@@ -33,14 +34,26 @@ export function SingleplayerQuizz() {
 
 
     const question = questions[currentIndex];
-    const isCorrect = (answer: String) => answer === question.answer;
-    const checkAswer = (answer: String) => {
-        nextQuestion();
+    const isCorrect = (answer: string) => answer === question.answer;
+    const checkAswer = (answer: string) => {
+        setSelectedAnswer(answer);
+        if (isCorrect(answer)) {
+            setFeedbackClass("has-background-primary");
+        } else {
+            setFeedbackClass("has-background-danger");
+        }
+        setTimeout(
+            () => {
+                setSelectedAnswer(null);
+                nextQuestion();
+            },
+            1000
+        );
     };
 
     return (
         <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
-            <div className="box has-text-centered" style={{ maxWidth: "600px", width: "100%" }}>
+            <div id="box" className={`box has-text-centered ${feedbackClass}`} style={{ maxWidth: "600px", width: "100%" }}>
                 {loading ? (
                     <h2 className="title is-2">Loading...</h2>
                 ) : question ? (
@@ -48,7 +61,7 @@ export function SingleplayerQuizz() {
                         <h1 className="title is-2 mb-5">{question.question || "Pregunta aleatoria"}</h1>
                         <div className="buttons is-flex is-flex-direction-column is-align-items-stretch">
                             {question.options.map((option: String, i: number) => (
-                                <button onClick={() => checkAswer(option)} key={i} className="button is-primary is-light mb-2">
+                                <button disabled={!!selectedAnswer} onClick={() => checkAswer(option)} key={i} className="button is-primary is-light mb-2">
                                     {option}
                                 </button>
                             ))}
