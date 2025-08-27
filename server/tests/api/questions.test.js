@@ -2,56 +2,55 @@ import pactum from "pactum";
 import http from "http";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
-import MakeEndpoints from "../routes/api.js";
 import dotenv from "dotenv";
 import express from "express";
-import { hash_password } from "../utils/utils.js";
-import { User } from "../db/models.js";
-import { UserPermissions } from "../constants.js";
+import MakeEndpoints from "../../routes/api.js";
+import { hash_password } from "../../utils/utils.js";
+import { User, Question } from "../../db/models.js";
+import { UserPermissions } from "../../constants.js";
 
 let server;
 let mongoServer;
 let accessToken;
 
-// --- Constantes de referencia ---
 const ADMIN_USER = {
     name: "admin",
     email: "admin@example.com",
     password: "admin1234",
     permissions: {
         ADMIN: true,
+
         EDIT_QUESTION: true,
         DELETE_QUESTION: true,
         CREATE_QUESTION: true,
+
+        CREATE_COLLECTION: true,
+        EDIT_COLLECTION: true,
+        DELETE_COLLECTION: true,
+
         EDIT_USER: true,
         DELETE_USER: true,
         CREATE_USER: true,
     },
 };
-
 const TEST_USER = {
     name: "newuser",
     email: "newuser@example.com",
     password: "12345678",
     permissions: {
         ADMIN: false,
-        EDIT_QUESTION: false,
-        DELETE_QUESTION: false,
-        CREATE_QUESTION: false,
-        EDIT_USER: false,
-        DELETE_USER: true,
-        CREATE_USER: false,
+        EDIT_QUESTION: true,
+        DELETE_QUESTION: true,
+        CREATE_QUESTION: true,
     },
 };
 
-// --- Setup y teardown ---
 before(async () => {
     dotenv.config();
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     await mongoose.connect(uri, { dbName: "test" });
 
-    // Crear admin directamente en BD
     const adminPassword = await hash_password(ADMIN_USER.password);
     await User.create({
         name: ADMIN_USER.name,
@@ -74,11 +73,10 @@ after(async () => {
     await mongoServer.stop();
 });
 
-// --- Tests ---
-describe("Auth API + Permissions", () => {
+describe("Questions + Permissions", () => {
+    let questionId;
 
-    // --- Registro y login del usuario de prueba ---
-    it("should register a new user", async () => {
+    it("should register a new test user", async () => {
         await pactum
             .spec()
             .post("/api/auth/register")
@@ -91,39 +89,6 @@ describe("Auth API + Permissions", () => {
             });
     });
 
-    it("should login test user", async () => {
-        const res = await pactum
-            .spec()
-            .post("/api/auth/login")
-            .withBody({ name: TEST_USER.name, password: TEST_USER.password })
-            .expectStatus(200)
-            .expectJsonLike({
-                success: true,
-                message: /.+/,
-                data: {
-                    user: { id: /.+/, name: TEST_USER.name, email: TEST_USER.email },
-                    accessToken: /.+/,
-                },
-            });
-        accessToken = res.body.data.accessToken;
-    });
-
-    // --- Pruebas de permisos del usuario ---
-    it("should fail to delete user due to insufficient permissions", async () => {
-        await pactum
-            .spec()
-            .post("/api/auth/delete")
-            .withHeaders({ Authorization: `Bearer ${accessToken}` })
-            .withBody({ name: TEST_USER.name })
-            .expectStatus(403)
-            .expectJsonLike({
-                success: false,
-                message: "Forbidden",
-                errors: ["You don't have the required permissions"],
-            });
-    });
-
-    // --- Login como admin ---
     it("should login admin user", async () => {
         const res = await pactum
             .spec()
@@ -141,7 +106,6 @@ describe("Auth API + Permissions", () => {
         accessToken = res.body.data.accessToken;
     });
 
-    // --- Modificar permisos del usuario como admin ---
     it("should allow admin to modify test user permissions", async () => {
         await pactum
             .spec()
@@ -152,48 +116,56 @@ describe("Auth API + Permissions", () => {
             .expectJsonLike({ success: true, message: "User edited successfully" });
     });
 
-    // --- Ahora test user puede eliminar si permisos fueron activados (simulación) ---
-    it("should allow test user to delete a user after permissions change", async () => {
-        // login nuevamente como test user
+
+    it("should login the test user", async () => {
         const res = await pactum
             .spec()
             .post("/api/auth/login")
             .withBody({ name: TEST_USER.name, password: TEST_USER.password })
             .expectStatus(200);
         accessToken = res.body.data.accessToken;
-
-        await pactum
-            .spec()
-            .post("/api/auth/delete")
-            .withHeaders({ Authorization: `Bearer ${accessToken}` })
-            .withBody({ name: TEST_USER.name })
-            .expectStatus(200)
-            .expectJsonLike({ success: true, message: /.+/ });
     });
 
-    // --- Admin elimina un usuario (puede usarse para limpiar) ---
-    it("should allow admin to delete a user", async () => {
-        // login nuevamente como admin
+    it("should create a question", async () => {
+        const questionData = {
+            user_name: TEST_USER.name,
+            question_text: "What is 2+2?",
+            options: ["3", "4", "5"],
+            answer: "4",
+            tags: ["math"],
+        };
+
         const res = await pactum
             .spec()
-            .post("/api/auth/login")
-            .withBody({ name: ADMIN_USER.name, password: ADMIN_USER.password })
-            .expectStatus(200);
-        accessToken = res.body.data.accessToken;
-
-        await pactum
-            .spec()
-            .post("/api/auth/delete")
+            .post("/api/question/create")
             .withHeaders({ Authorization: `Bearer ${accessToken}` })
-            .withBody({ name: TEST_USER.name })
-            .expectStatus(404)
-            .expectJsonLike({
-                "success": false,
-                "message": "User don't found",
-                "errors": [
-                    "Not exists an user with this name"
-                ]
-            });
+            .withBody(questionData)
+            .expectStatus(200);
+
+        questionId = res.body.data._id;
     });
 
+    it("should edit the question", async () => {
+        await pactum
+            .spec()
+            .post("/api/question/edit")
+            .withHeaders({ Authorization: `Bearer ${accessToken}` })
+            .withBody({
+                id: questionId,
+                field: "question",
+                value: "What is 3+3?",
+            })
+            .expectStatus(200)
+            .expectJsonLike({ success: true, message: "Question edited successfully" });
+    });
+
+    it("should delete the question", async () => {
+        await pactum
+            .spec()
+            .post("/api/question/delete")
+            .withHeaders({ Authorization: `Bearer ${accessToken}` })
+            .withBody({ id: questionId })
+            .expectStatus(200)
+            .expectJsonLike({ success: true, message: "Question deleted successfully" });
+    });
 });

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "mocha ./tests/**/*.test.js --require @babel/register --timeout 10000"
+    "test": "node run-tests.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

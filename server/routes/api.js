@@ -201,7 +201,8 @@ export default function MakeEndpoints(app) {
             if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
 
-            const existing = await Question.findOne({ question: question_text });
+            const existing = await Question.findOne({ question: question_text, owner: user._id });
+
             if (existing) {
                 return send_response_unsuccessful(res, "This question already exists", [QUESTION_ALREADY_EXISTS]);
             }
@@ -251,24 +252,28 @@ export default function MakeEndpoints(app) {
 
     app.post("/api/collection/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), async (req, res) => {
         try {
-            const { id, field, value, user_name } = req.body;
+            const { field, value, user_name, collection_name } = req.body;
 
             const allowedFields = ["name", "tags", "questions"];
             if (!allowedFields.includes(field)) {
                 return send_response_unsuccessful(res, "Invalid field", ["Field not editable"]);
             }
 
+
+
             const user = await User.findOne({ name: user_name });
             if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+
+            const collection = await QuizzCollection.findOne({ name: collection_name, owner: user._id });
+            if (!collection) {
+                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
+            }
 
             if (!require_ownership_or_admin(user, collection.owner)) {
                 return send_response_unsuccessful(res, "No permission", [NEED_OWNERSHIP_OR_ADMIN]);
             }
 
-            const collection = await QuizzCollection.findById(id);
-            if (!collection) {
-                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
-            }
+
 
             collection[field] = value;
             await collection.save();
@@ -284,20 +289,22 @@ export default function MakeEndpoints(app) {
 
     app.post("/api/collection/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), async (req, res) => {
         try {
-            const { user_name, id } = req.body;
+            const { user_name, collection_name } = req.body;
 
 
             const user = await User.findOne({ name: user_name });
             if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
+            const collection = await QuizzCollection.findOne({ name: collection_name, owner: user._id });
+
+            if (!collection) {
+                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
+            }
+
             if (!require_ownership_or_admin(user, collection.owner)) {
                 return send_response_unsuccessful(res, "No permission", [NEED_OWNERSHIP_OR_ADMIN]);
             }
 
-            const collection = await QuizzCollection.findById(id);
-            if (!collection) {
-                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
-            }
 
             await collection.deleteOne();
 
