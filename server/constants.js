@@ -17,18 +17,27 @@ export const EMAIL_TAKEN = "This email is already in use.";
 export const NOT_FOUND_USER = "Not exists an user with this name";
 export const USER_NOT_EXISTS = "User not exists.";
 export const QUESTION_NOT_FOUND = "Question not found.";
+export const COLLECTION_NOT_FOUND = "Collection not found.";
 export const QUESTION_ALREADY_EXISTS = "Question already exists";
 export const INVALID_STRING = "Invalid string";
 export const INVALID_OPTIONS_ARRAY = "At least 2 options required";
 export const OPTIONS_MUST_INCLUDE_ANSWER = "Answer must be one of the options";
+export const INVALID_TAGS_ARRAY = "Invalid tags array";
+export const INVALID_QUESTIONS_ARRAY = "Invalid questions array";
+export const COLLECTION_ALREADY_EXISTS = "Collection already exists.";
+export const NEED_OWNERSHIP_OR_ADMIN = "You msut be owner or admin to edit this";
 
 // ? Admin Permissions
 export const UserPermissions = {
-    ADMIN: "ADMIN",
+    ADMIN: "ADMIN", // Allows user the next permissions with thits that they dony possey
 
     EDIT_QUESTION: "EDIT_QUESTION",
     DELETE_QUESTION: "DELETE_QUESTION",
     CREATE_QUESTION: "CREATE_QUESTION",
+
+    CREATE_COLLECTION: "CREATE_COLLECTION",
+    EDIT_COLLECTION: "EDIT_COLLECTION",
+    DELETE_COLLECTION: "DELETE_COLLECTION",
 
     EDIT_USER: "EDIT_USER",
     DELETE_USER: "DELETE_USER",
