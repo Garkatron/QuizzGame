@@ -317,7 +317,14 @@ export default function MakeEndpoints(app) {
 
     app.get("/api/collections/:ownername", async (req, res) => {
         try {
-            const quizzCollections = await QuizzCollection.find({ owner: req.params.ownername });
+
+            const { ownername } = req.params;
+
+            const user = await User.findOne({ name: ownername });
+            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+
+
+            const quizzCollections = await QuizzCollection.find({ owner: user._id });
             return send_response_successful(res, "Quizz Collections", quizzCollections);
         } catch (error) {
             return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
@@ -337,7 +344,11 @@ export default function MakeEndpoints(app) {
     app.get("/api/questions/owner/:ownername", async (req, res) => {
         try {
             const { ownername } = req.params;
-            const questions = await Question.find({ owner: ownername });
+
+            const user = await User.findOne({ name: ownername });
+            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+
+            const questions = await Question.find({ owner: user._id });
             return send_response_successful(res, "Questions", questions);
         } catch (error) {
             return send_response_unsuccessful(res, "Error retrieving question with id" + req.params.id, [error.message]);

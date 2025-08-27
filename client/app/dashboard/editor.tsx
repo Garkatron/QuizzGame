@@ -3,6 +3,7 @@ import { QuestionDropdown, type Question } from "./QuestionDropdown";
 import { CollectionEditor } from "./CollectionEditor";
 import { CollectionFormModal } from "./CollectionFormModal";
 import { QuestionFormModal } from "./QuestionFormModal";
+import { getCookie } from "~/cookie";
 
 
 export function Dashboard() {
@@ -10,11 +11,14 @@ export function Dashboard() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [collections, setCollections] = useState<any[]>([]);
 
+    const [isMenuOpen, openMenu] = useState<boolean>(false);
+
     const [loading, setLoading] = useState(true);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
     useEffect(() => {
-        fetch("/api/questions")
+
+        fetch(`/api/questions/owner/${getCookie("username")}`)
             .then(res => res.json())
             .then(json => {
                 if (Array.isArray(json.data)) {
@@ -24,9 +28,10 @@ export function Dashboard() {
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
 
-        fetch("/api/collections")
+        fetch(`/api/collections/${getCookie("username")}`)
             .then(res => res.json())
             .then(json => {
+
                 if (Array.isArray(json.data)) {
                     setCollections(json.data);
                 }
@@ -85,7 +90,9 @@ export function Dashboard() {
                                 ))) : (
                                     collections.map((c: any, idx: number) => (
 
-                                        <CollectionEditor collection={c} />
+                                        <CollectionEditor
+                                            key={idx}
+                                            collection={c} />
                                     )
                                     ))
 
@@ -93,11 +100,15 @@ export function Dashboard() {
                     </div>
                 )}
 
-                <CollectionFormModal active={true} />
+                {
+                    activeTab === "collections" ? (<CollectionFormModal active={isMenuOpen} />) : (<QuestionFormModal active={isMenuOpen} onAddQuestion={() => { }} />)
+                }
+
+
 
 
                 <div className="buttons is-centered is-flex-wrap-wrap mt-4">
-                    <button className="button is-success mb-2 mr-2">New</button>
+                    <button onClick={() => { openMenu(!isMenuOpen) }} className="button is-success mb-2 mr-2">New</button>
                 </div>
             </div>
         </main>

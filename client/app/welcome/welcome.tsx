@@ -16,6 +16,12 @@ export function Welcome() {
           <Link to="/quiz/multiplayer" className="button is-primary is-large">
             Multiplayer
           </Link>
+          <Link to="/login" className="button is-primary is-large">
+            login
+          </Link>
+          <Link to="/register" className="button is-primary is-large">
+            register
+          </Link>
         </div>
       </div>
     </main>

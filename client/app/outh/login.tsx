@@ -1,18 +1,57 @@
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import { setCookie } from "~/cookie"; // si quieres guardar token
+
 export function Login() {
+    const navigate = useNavigate();
+    const [name, setName] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault(); // evita que se recargue la página
+
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, password }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // guardar token o username en cookies/localStorage
+                setCookie("token", data.data.accessToken);
+                setCookie("username", data.data.user.name);
+
+                // redirigir al dashboard
+                navigate("/");
+            } else {
+                setError(data.message || "Login failed");
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Error connecting to server");
+        }
+    };
+
     return (
         <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
             <div className="box" style={{ width: "400px" }}>
                 <h1 className="title is-2 has-text-centered mb-5">Login</h1>
 
-                <form>
-                    {/* Email */}
+                {error && <p className="has-text-danger">{error}</p>}
+
+                <form onSubmit={handleSubmit}>
                     <div className="field">
-                        <label className="label">Email</label>
+                        <label className="label">Username</label>
                         <div className="control has-icons-left">
                             <input
                                 className="input"
-                                type="email"
-                                placeholder="Enter your email"
+                                placeholder="Enter your username"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 required
                             />
                             <span className="icon is-small is-left">
@@ -21,7 +60,6 @@ export function Login() {
                         </div>
                     </div>
 
-                    {/* Password */}
                     <div className="field">
                         <label className="label">Password</label>
                         <div className="control has-icons-left">
@@ -29,6 +67,8 @@ export function Login() {
                                 className="input"
                                 type="password"
                                 placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
                             <span className="icon is-small is-left">
@@ -37,7 +77,6 @@ export function Login() {
                         </div>
                     </div>
 
-                    {/* Button */}
                     <div className="field mt-5">
                         <div className="control">
                             <button type="submit" className="button is-primary is-fullwidth">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { QuestionFormModal } from "./QuestionFormModal";
+import { getCookie } from "~/cookie";
 
 type CollectionFormModalProps = {
     active?: boolean;
@@ -8,10 +9,36 @@ type CollectionFormModalProps = {
 export function CollectionFormModal({ active = false }: CollectionFormModalProps) {
     const [questions, setQuestions] = useState<string[]>([]);
     const [isQuestionMenuOpen, openQuestionMenu] = useState<boolean>(false);
+    const [collectionName, setCollectionName] = useState<string>("");
 
     const addQuestion = (qid: string): void => {
         setQuestions([...questions, qid]);
     }
+
+    const handleCreateCollection = async () => {
+
+        const res = await fetch("/api/collection/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getCookie("token")}`,
+            },
+            body: JSON.stringify({
+                user_name: getCookie("username"),
+                questions: questions,
+                tags: [],
+                name: collectionName,
+            }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            return data.data._id;
+        } else {
+            console.error(data.message);
+            return null;
+        }
+    };
 
     return (
         <div className={`modal ${active ? "is-active" : ""}`}>
@@ -25,9 +52,9 @@ export function CollectionFormModal({ active = false }: CollectionFormModalProps
                         <div className="control has-icons-left">
                             <input
                                 className="input"
-                                type="email"
                                 placeholder="Name of your collection"
                                 required
+                                onChange={(e) => { setCollectionName(e.target.value) }}
                             />
                             <span className="icon is-small is-left">
                                 <i className="fas fa-envelope"></i>
@@ -50,13 +77,7 @@ export function CollectionFormModal({ active = false }: CollectionFormModalProps
                                 />
                             ))}
 
-                            <QuestionFormModal active={isQuestionMenuOpen} onAddQuestion={(question_id: string | null) => {
-                                if (question_id) {
-                                    addQuestion(question_id);
-                                }
-                                openQuestionMenu(false);
 
-                            }} />
 
                             <button onClick={() => openQuestionMenu(true)} className="button" type="button">+</button>
                         </div>
@@ -65,7 +86,10 @@ export function CollectionFormModal({ active = false }: CollectionFormModalProps
                     {/* Button */}
                     <div className="field mt-5">
                         <div className="control">
-                            <button type="submit" className="button is-primary is-fullwidth">
+                            <button type="submit" onClick={async () => {
+                                const _id = await handleCreateCollection();
+
+                            }} className="button is-primary is-fullwidth">
                                 Create
                             </button>
                         </div>
@@ -73,6 +97,13 @@ export function CollectionFormModal({ active = false }: CollectionFormModalProps
                 </form>
 
             </div>
+            <QuestionFormModal active={isQuestionMenuOpen} onAddQuestion={(question_id: string | null) => {
+                if (question_id) {
+                    addQuestion(question_id);
+                }
+                openQuestionMenu(false);
+
+            }} />
             <button className="modal-close is-large" aria-label="close"></button>
         </div>
     );
