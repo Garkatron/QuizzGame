@@ -55,8 +55,8 @@ export function Dashboard() {
     return (
         <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
             <div
-                className="box has-text-centered p-6"
-                style={{ maxWidth: "600px", width: "100%" }}
+                className="has-text-centered p-6"
+                style={{ maxWidth: "700px", width: "100%", maxHeight: "200px" }}
             >
                 <h1 className="title is-2 mb-4">Quiz Builder</h1>
                 <h2 className="subtitle is-4 mb-5">Manage your questions and collections</h2>
@@ -71,33 +71,35 @@ export function Dashboard() {
                         </li>
                     </ul>
                 </div>
+            </div>
 
+            <div className="section" style={{ maxWidth: "700px", width: "100%", minHeight: "600px" }}>
                 {loading ? (
                     <h2 className="title is-2">Loading...</h2>
                 ) : (
-                    <div className="block" style={{ height: "400px", overflowY: "auto" }}>
-                        {
-
-                            activeTab === "questions" ?
-                                (questions.map((q: Question, idx: number) => (
-                                    <QuestionDropdown
-                                        key={idx}
-                                        idx={idx}
-                                        question={q}
-                                        toggleOpen={toggleOpen}
-                                        openIndex={openIndex}
-                                    />
-                                ))) : (
-                                    collections.map((c: any, idx: number) => (
-
-                                        <CollectionEditor
-                                            key={idx}
-                                            collection={c} />
-                                    )
-                                    ))
-
-                        }
+                    <div
+                        className="block"
+                        style={{
+                            height: "700px",
+                            overflowY: "scroll",
+                            paddingRight: "10px",
+                        }}
+                    >
+                        {activeTab === "questions"
+                            ? questions.map((q: Question, idx: number) => (
+                                <QuestionDropdown
+                                    key={idx}
+                                    idx={idx}
+                                    question={q}
+                                    toggleOpen={toggleOpen}
+                                    openIndex={openIndex}
+                                />
+                            ))
+                            : collections.map((c: any, idx: number) => (
+                                <CollectionEditor key={idx} collection={c} />
+                            ))}
                     </div>
+
                 )}
 
                 {
