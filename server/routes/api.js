@@ -315,9 +315,39 @@ export default function MakeEndpoints(app) {
         }
     });
 
-    app.get("/api/questions/:id", async (req, res) => {
+    app.get("/api/collections/:ownername", async (req, res) => {
         try {
-            const question = await Question.find({ _id: req.params.id });
+            const quizzCollections = await QuizzCollection.find({ owner: req.params.ownername });
+            return send_response_successful(res, "Quizz Collections", quizzCollections);
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+        }
+    });
+
+    app.get("/api/collections", async (req, res) => {
+        try {
+            const quizzCollections = await QuizzCollection.find();
+            return send_response_successful(res, "Quizz Collections", quizzCollections);
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+        }
+    });
+
+
+    app.get("/api/questions/owner/:ownername", async (req, res) => {
+        try {
+            const { ownername } = req.params;
+            const questions = await Question.find({ owner: ownername });
+            return send_response_successful(res, "Questions", questions);
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error retrieving question with id" + req.params.id, [error.message]);
+        }
+    });
+
+    app.get("/api/questions/id/:id", async (req, res) => {
+        try {
+            const { id } = req.params;
+            const question = await Question.findById(id);
             return send_response_successful(res, "Question", question);
         } catch (error) {
             return send_response_unsuccessful(res, "Error retrieving question with id" + req.params.id, [error.message]);

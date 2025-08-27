@@ -1,13 +1,13 @@
 import type { Route } from "./+types/home";
-import { Editor } from "~/editor/editor";
+import { Dashboard } from "~/dashboard/editor";
 
 export function meta({ }: Route.MetaArgs) {
     return [
-        { title: "Deus Quizzes" },
+        { title: "Quiz Dashboard" },
         { name: "description", content: "Welcome to Deus Quizzes!" },
     ];
 }
 
 export default function Home() {
-    return <Editor />;
+    return <Dashboard />;
 }

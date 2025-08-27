@@ -60,7 +60,7 @@ export function SingleplayerQuizz() {
                     <>
                         <h1 className="title is-2 mb-5">{question.question || "Pregunta aleatoria"}</h1>
                         <div className="buttons is-flex is-flex-direction-column is-align-items-stretch">
-                            {question.options.map((option: String, i: number) => (
+                            {question.options.map((option: string, i: number) => (
                                 <button disabled={!!selectedAnswer} onClick={() => checkAswer(option)} key={i} className="button is-primary is-light mb-2">
                                     {option}
                                 </button>
