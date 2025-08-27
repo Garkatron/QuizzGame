@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { Quizz } from "~/quizz/quizz";
+import { MultiplayerQuizz } from "~/quizz/quizz.multi";
 
 export function meta({ }: Route.MetaArgs) {
     return [
@@ -9,5 +9,5 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Home() {
-    return <Quizz />;
+    return <MultiplayerQuizz />;
 }
