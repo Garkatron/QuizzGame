@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useMemo, useState, type JSX } from "react";
 import { QuestionDropdown } from "./question/QuestionDropdown";
 import { CollectionItem } from "./collection/CollectionItem";
 import { CollectionFormModal } from "./collection/CollectionFormModal";
@@ -14,9 +14,7 @@ export function Dashboard() {
     const { username } = useUser();
 
     // * State
-    const [loading, setLoading] = useState(true);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-    const [collectionToEditID, setCollectionToEditID] = useState<string | null>(null);
 
     const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions } =
         useFetch<Question[]>(username ? `/api/questions/owner/${username}` : null);
@@ -27,38 +25,27 @@ export function Dashboard() {
 
     // * Menu
     const [activeTab, setActiveTab] = useState<"questions" | "collections">("collections");
-    const [isOpenQuestionForm, openQuestionForm] = useState<boolean>(false);
+    const [isFormOpen, openForm] = useState<boolean>(false);
 
     // * Fuctions
     const toggleOpen = (index: number) => {
         setOpenIndex(openIndex === index ? null : index);
     };
-    let content;
 
-    if (activeTab === "questions") {
-        if (isLoadingQuestions || !questions) {
-            content = <p>Loading...</p>;
-        } else {
-            content = questions.map((question: Question, idx: number) => (
-                <QuestionDropdown
-                    key={idx}
-                    idx={idx}
-                    question={question}
-                    toggleOpen={toggleOpen}
-                    openIndex={openIndex}
-                />
+    // * Prepare
+    const content = useMemo(() => {
+        if (activeTab === "questions") {
+            if (isLoadingQuestions || !questions) return <p>Loading...</p>;
+            return questions.map((question, idx) => (
+                <QuestionDropdown key={idx} idx={idx} question={question} toggleOpen={toggleOpen} openIndex={openIndex} />
             ));
-        }
-    } else {
-
-        if (isLoadingCollections || !collections) {
-            content = <p>Loading...</p>;
         } else {
-            content = collections.map((c: Collection, idx: number) => (
+            if (isLoadingCollections || !collections) return <p>Loading...</p>;
+            return collections.map((c, idx) => (
                 <CollectionItem key={idx} idx={idx} collection={c} id={c._id} />
             ));
         }
-    }
+    }, [activeTab, questions, collections, openIndex, isLoadingQuestions, isLoadingCollections]);
 
 
     // * JSX
@@ -93,14 +80,14 @@ export function Dashboard() {
 
                 {/* BUTTON & MENU */}
                 <div className="buttons is-centered is-flex-wrap-wrap mt-4">
-                    <button onClick={() => { openQuestionForm(!isOpenQuestionForm) }} className="button is-success mb-2 mr-2">New</button>
+                    <button onClick={() => { openForm(!isFormOpen) }} className="button is-success mb-2 mr-2">New</button>
                 </div>
 
                 {
                     activeTab === "questions" ? // IF
-                        (<QuestionFormModal active={isOpenQuestionForm} onAddQuestion={() => { }} />) // Questions
+                        (<QuestionFormModal active={isFormOpen} onAddQuestion={() => { }} />) // Questions
                         :
-                        (<CollectionFormModal active={isOpenQuestionForm} id={null} onClose={() => { }} />)
+                        (<CollectionFormModal active={isFormOpen} id={null} onClose={() => { }} />)
                 }
             </div>
         </main>

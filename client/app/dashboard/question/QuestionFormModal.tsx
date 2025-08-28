@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getCookie } from "~/cookie";
+import { createQuestion } from "~/utils/utils";
 
 type QuestionsFormModalProps = {
     active?: boolean;
@@ -28,38 +29,20 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
         setAnswers(updated);
     }
 
-    const buildQuestion = () => {
-        return {
-            question_text: questionText,
-            tags: tags.split(",").map(t => t.trim()),
-            answers: answers,
-        };
-    };
-
     // * POST
     const handleCreateQuestion = async () => {
-        const questionObj = buildQuestion();
+        try {
+            const res = await createQuestion(questionText, tags.split(",").map(t => t.trim()), answers, answers[0]);
+            console.log(res);
 
-        const res = await fetch("/api/question/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getCookie("token")}`,
-            },
-            body: JSON.stringify({
-                user_name: getCookie("username"),
-                question_text: questionObj.question_text,
-                options: questionObj.answers,
-                answer: questionObj.answers[0],
-                tags: questionObj.tags,
-            }),
-        });
-
-        const data = await res.json();
-        if (data.success) {
-            return data.data._id;
-        } else {
-            console.error(data.message);
+            if (res.success) {
+                return res.data._id;
+            } else {
+                console.error(res.error);
+                return null;
+            }
+        } catch (error) {
+            alert(error);
             return null;
         }
     };

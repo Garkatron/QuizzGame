@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { JSX } from "react";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
+import { updateQuestion } from "~/utils/utils";
 
 
 type QuestionDropdownProps = {
@@ -23,32 +24,16 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
     };
 
     const handleSaveAll = async () => {
-        await fetch("/api/question/edit", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getCookie("token")}`,
-            },
-            body: JSON.stringify({
-                id: question._id,
-                field: "options",
-                value: options,
-            }),
-        });
+        try {
+            await updateQuestion(question._id, "options", options);
+            await updateQuestion(question._id, "question", name);
+        } catch (error) {
+            console.error(error);
+            alert("Error saving changes");
+        }
 
-        await fetch("/api/question/edit", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getCookie("token")}`,
-            },
-            body: JSON.stringify({
-                id: question._id,
-                field: "question",
-                value: name,
-            }),
-        });
     };
+
     return (
         <div className="box mb-4 has-text-left">
             {/* Header */}
