@@ -115,11 +115,24 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         }
     };
 
-
-
-    const handleDeleteCollection = () => {
+    const handleDeleteCollection = async () => {
+        try {
+            const res = await fetch("/api/collection/delete", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${getCookie("token")}`,
+                },
+                body: JSON.stringify({
+                    owner_id: ownerId,
+                    collection_id: id
+                }),
+            });
+            console.log(res);
+        } catch (err) {
+            console.log(err);
+        }
         onClose();
-
     };
 
     const handleCancelCollection = () => {
@@ -187,11 +200,13 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
                             {id ? (
                                 <>
-                                    <button type="button" onClick={handleDeleteCollection} className="button is-danger is-fullwidth">
+                                    <button type="button" onClick={async () => await handleDeleteCollection()} className="button is-danger is-fullwidth">
                                         Delete
                                     </button>
 
-                                    <button type="button" onClick={handleSaveCollection} className="button is-primary is-fullwidth">
+                                    <button type="button" onClick={async () => {
+                                        await handleSaveCollection()
+                                    }} className="button is-primary is-fullwidth">
                                         Save
                                     </button>
                                 </>

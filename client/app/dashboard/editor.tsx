@@ -18,7 +18,7 @@ export function Dashboard() {
     const [collections, setCollections] = useState<any[]>([]);
 
     // * Menu
-    const [activeTab, setActiveTab] = useState<"questions" | "collections">("questions");
+    const [activeTab, setActiveTab] = useState<"questions" | "collections">("collections");
     const [isOpenQuestionForm, openQuestionForm] = useState<boolean>(false);
 
     // * Fuctions

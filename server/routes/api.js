@@ -288,13 +288,13 @@ export default function MakeEndpoints(app) {
 
     app.post("/api/collection/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), async (req, res) => {
         try {
-            const { user_name, collection_name } = req.body;
+            const { owner_id, collection_id } = req.body;
 
-
-            const user = await User.findOne({ name: user_name });
+            const user = await User.findOne({ _id: owner_id });
             if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
-            const collection = await QuizzCollection.findOne({ name: collection_name, owner: user._id });
+
+            const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
 
             if (!collection) {
                 return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
