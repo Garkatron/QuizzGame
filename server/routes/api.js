@@ -315,7 +315,20 @@ export default function MakeEndpoints(app) {
         }
     });
 
-    app.get("/api/collections/:ownername", async (req, res) => {
+
+    app.get("/api/collections/id/:id", async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            const quizzCollections = await QuizzCollection.findOne({ _id: id })
+                .populate("questions");
+            return send_response_successful(res, "Quizz Collections", quizzCollections);
+        } catch (error) {
+            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+        }
+    });
+
+    app.get("/api/collections/owner/:ownername", async (req, res) => {
         try {
 
             const { ownername } = req.params;
@@ -324,10 +337,11 @@ export default function MakeEndpoints(app) {
             if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
 
-            const quizzCollections = await QuizzCollection.find({ owner: user._id });
+            const quizzCollections = await QuizzCollection.find({ owner: user._id }).populate("questions");
             return send_response_successful(res, "Quizz Collections", quizzCollections);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+            return send_response_unsuccessful(res, "Error retrieving Quizz Collections for " + ownername, [error.message]);
+
         }
     });
 

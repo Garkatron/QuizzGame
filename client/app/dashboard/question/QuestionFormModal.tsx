@@ -7,10 +7,13 @@ type QuestionsFormModalProps = {
 };
 
 export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFormModalProps) {
+
+    // * State
     const [answers, setAnswers] = useState<string[]>([]);
     const [questionText, setQuestionText] = useState("");
     const [tags, setTags] = useState("");
 
+    // * Functions
     const addQuestion = (): void => {
         setAnswers([...answers, ""]);
     }
@@ -33,6 +36,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
         };
     };
 
+    // * POST
     const handleCreateQuestion = async () => {
         const questionObj = buildQuestion();
 
@@ -60,6 +64,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
         }
     };
 
+    // * JSX
     return (
         <div className={`modal ${active ? "is-active" : ""}`}>
             <div className="modal-background"></div>
@@ -99,8 +104,9 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                     {/* Answers */}
                     <div className="field">
                         <label className="label">Answers</label>
+                        {/* Answer */}
                         {answers.map((answer, idx) => (
-                            <div key={idx} className="field has-addons mb-2">
+                            < div key={idx} className="field has-addons mb-2" >
                                 <div className="control is-expanded">
                                     <input
                                         className="input"
@@ -122,12 +128,13 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                 </div>
                             </div>
                         ))}
+                        {/* Add question button */}
                         <button
                             type="button"
                             className="button is-success"
                             onClick={addQuestion}
                         >
-                            + Add Answer
+                            +
                         </button>
                     </div>
 
@@ -147,8 +154,8 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                         </div>
                     </div>
                 </form>
-            </div>
+            </div >
             <button className="modal-close is-large" aria-label="close"></button>
-        </div>
+        </div >
     );
 }

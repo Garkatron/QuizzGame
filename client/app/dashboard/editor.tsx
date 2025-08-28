@@ -1,23 +1,33 @@
 import { useEffect, useState, type JSX } from "react";
-import { QuestionDropdown, type Question } from "./QuestionDropdown";
-import { CollectionEditor } from "./CollectionEditor";
-import { CollectionFormModal } from "./CollectionFormModal";
-import { QuestionFormModal } from "./QuestionFormModal";
+import { QuestionDropdown } from "./question/QuestionDropdown";
+import { CollectionItem } from "./collection/CollectionItem";
+import { CollectionFormModal } from "./collection/CollectionFormModal";
+import { QuestionFormModal } from "./question/QuestionFormModal";
 import { getCookie } from "~/cookie";
+import type { Collection, Question } from "~/owntypes";
 
 
 export function Dashboard() {
-    const [activeTab, setActiveTab] = useState<"questions" | "collections">("questions");
+
+    // * State
+    const [loading, setLoading] = useState(true);
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const [collectionToEditID, setCollectionToEditID] = useState<string | null>(null);
+
     const [questions, setQuestions] = useState<Question[]>([]);
     const [collections, setCollections] = useState<any[]>([]);
 
-    const [isMenuOpen, openMenu] = useState<boolean>(false);
+    // * Menu
+    const [activeTab, setActiveTab] = useState<"questions" | "collections">("questions");
+    const [isOpenQuestionForm, openQuestionForm] = useState<boolean>(false);
 
-    const [loading, setLoading] = useState(true);
-    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    // * Fuctions
+    const toggleOpen = (index: number) => {
+        setOpenIndex(openIndex === index ? null : index);
+    };
 
     useEffect(() => {
-
+        // * Questions by owner
         fetch(`/api/questions/owner/${getCookie("username")}`)
             .then(res => res.json())
             .then(json => {
@@ -28,7 +38,8 @@ export function Dashboard() {
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
 
-        fetch(`/api/collections/${getCookie("username")}`)
+        // * Collections by owner
+        fetch(`/api/collections/owner/${getCookie("username")}`)
             .then(res => res.json())
             .then(json => {
 
@@ -40,20 +51,11 @@ export function Dashboard() {
             .finally(() => setLoading(false));
     }, []);
 
-    const toggleOpen = (index: number) => {
-        setOpenIndex(openIndex === index ? null : index);
-    };
 
-    const newElement = () => {
-        if (activeTab === "questions") {
-
-        } else if (activeTab === "collections") {
-
-        }
-    }
-
+    // * JSX
     return (
         <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
+            {/* BANNER */}
             <div
                 className="has-text-centered p-6"
                 style={{ maxWidth: "700px", width: "100%", maxHeight: "200px" }}
@@ -61,6 +63,7 @@ export function Dashboard() {
                 <h1 className="title is-2 mb-4">Quiz Builder</h1>
                 <h2 className="subtitle is-4 mb-5">Manage your questions and collections</h2>
 
+                {/* TABS */}
                 <div className="tabs is-centered mb-5">
                     <ul>
                         <li className={activeTab === "questions" ? "is-active" : ""}>
@@ -73,45 +76,33 @@ export function Dashboard() {
                 </div>
             </div>
 
+            {/* SECTIONS */}
             <div className="section" style={{ maxWidth: "700px", width: "100%", minHeight: "600px" }}>
                 {loading ? (
                     <h2 className="title is-2">Loading...</h2>
                 ) : (
-                    <div
-                        className="block"
-                        style={{
-                            height: "700px",
-                            overflowY: "scroll",
-                            paddingRight: "10px",
-                        }}
-                    >
-                        {activeTab === "questions"
-                            ? questions.map((q: Question, idx: number) => (
-                                <QuestionDropdown
-                                    key={idx}
-                                    idx={idx}
-                                    question={q}
-                                    toggleOpen={toggleOpen}
-                                    openIndex={openIndex}
-                                />
-                            ))
-                            : collections.map((c: any, idx: number) => (
-                                <CollectionEditor key={idx} collection={c} />
-                            ))}
+                    <div className="block" style={{ height: "700px", overflowY: "scroll", paddingRight: "10px" }}>
+                        {activeTab === "questions" ? questions.map((question: Question, idx: number) =>
+                        (
+                            <QuestionDropdown key={idx} idx={idx} question={question} toggleOpen={toggleOpen} openIndex={openIndex} />
+                        )) : collections.map((c: Collection, idx: number) => (
+                            <CollectionItem key={idx} idx={idx} collection={c} id={c._id} />
+                        ))
+                        }
                     </div>
-
                 )}
 
-                {
-                    activeTab === "collections" ? (<CollectionFormModal active={isMenuOpen} />) : (<QuestionFormModal active={isMenuOpen} onAddQuestion={() => { }} />)
-                }
-
-
-
-
+                {/* BUTTON & MENU */}
                 <div className="buttons is-centered is-flex-wrap-wrap mt-4">
-                    <button onClick={() => { openMenu(!isMenuOpen) }} className="button is-success mb-2 mr-2">New</button>
+                    <button onClick={() => { openQuestionForm(!isOpenQuestionForm) }} className="button is-success mb-2 mr-2">New</button>
                 </div>
+
+                {
+                    activeTab === "questions" ? // IF
+                        (<QuestionFormModal active={isOpenQuestionForm} onAddQuestion={() => { }} />) // Questions
+                        :
+                        (<CollectionFormModal active={isOpenQuestionForm} id={null} />)
+                }
             </div>
         </main>
     );

@@ -2,21 +2,17 @@ import React, { useEffect, useState } from "react";
 
 import type { JSX } from "react";
 import { getCookie } from "~/cookie";
+import type { Question } from "~/owntypes";
 
-export type Question = {
-    _id: string,
-    question: string;
-    options: string[];
-    tags: string
-};
-type Props = {
+
+type QuestionDropdownProps = {
     idx: number;
     question: Question;
     toggleOpen: (index: number) => void;
     openIndex: number | null;
 };
 
-export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Props): JSX.Element {
+export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: QuestionDropdownProps): JSX.Element {
     const [options, setOptions] = useState<string[]>(question.options);
     const [name, setName] = useState<string>(question.question);
 
@@ -55,7 +51,7 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Props
     };
     return (
         <div className="box mb-4 has-text-left">
-            {/* Encabezado */}
+            {/* Header */}
             <div
                 className="is-flex is-justify-content-space-between is-align-items-center p-2"
                 style={{
@@ -72,10 +68,7 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Props
                     style={{ border: "none", boxShadow: "none" }}
                 />
                 <span className="icon">
-                    <i
-                        className={`fas ${openIndex === idx ? "fa-chevron-up" : "fa-chevron-down"
-                            }`}
-                    ></i>
+                    <i className={`fas ${openIndex === idx ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
                 </span>
             </div>
 
@@ -84,15 +77,10 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Props
                 <span className="tag is-info is-warning">#{question.tags}</span>
             </div>
 
-            {/* Opciones */}
-            <div
-                className={`mt-3 transition-all ${openIndex === idx ? "is-block" : "is-hidden"
-                    }`}
-            >
+            {/* Opctions */}
+            <div className={`mt-3 transition-all ${openIndex === idx ? "is-block" : "is-hidden"}`}>
                 {options.map((opt, i) => (
-                    <div
-                        key={i}
-                        className="field is-flex is-align-items-center mb-2"
+                    <div key={i} className="field is-flex is-align-items-center mb-2"
                         style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: "6px" }}
                     >
                         <span className="mr-2 has-text-grey">{i + 1}.</span>
@@ -107,13 +95,13 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Props
                     </div>
                 ))}
 
-                {/* Botón Save */}
+                {/** Button */}
                 <button
                     onClick={handleSaveAll}
                     className="button is-primary is-fullwidth mt-3"
                     type="button"
                 >
-                    💾 Save Changes
+                    Save Changes
                 </button>
             </div>
         </div>
