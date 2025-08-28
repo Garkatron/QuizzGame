@@ -1,6 +1,6 @@
 import { useState, type JSX } from "react";
 
-import { type Collection } from "../../owntypes";
+import { type Collection } from "../../utils/owntypes";
 import { QuestionFormModal } from "../question/QuestionFormModal";
 import { CollectionFormModal } from "./CollectionFormModal";
 

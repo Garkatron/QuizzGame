@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { QuestionFormModal } from "../question/QuestionFormModal";
 import { getCookie } from "~/cookie";
-import type { Question } from "~/owntypes";
+import type { Question } from "~/utils/owntypes";
 import { QuestionDropdown } from "../question/QuestionDropdown";
 
 type CollectionFormModalProps = {

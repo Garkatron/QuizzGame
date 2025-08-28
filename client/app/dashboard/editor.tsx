@@ -4,18 +4,26 @@ import { CollectionItem } from "./collection/CollectionItem";
 import { CollectionFormModal } from "./collection/CollectionFormModal";
 import { QuestionFormModal } from "./question/QuestionFormModal";
 import { getCookie } from "~/cookie";
-import type { Collection, Question } from "~/owntypes";
+import type { Collection, Question } from "~/utils/owntypes";
+import { useFetch } from "~/utils/utils";
+import { useUser } from "~/utils/UserContext";
 
 
 export function Dashboard() {
+
+    const { username } = useUser();
 
     // * State
     const [loading, setLoading] = useState(true);
     const [openIndex, setOpenIndex] = useState<number | null>(null);
     const [collectionToEditID, setCollectionToEditID] = useState<string | null>(null);
 
-    const [questions, setQuestions] = useState<Question[]>([]);
-    const [collections, setCollections] = useState<any[]>([]);
+    const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions } =
+        useFetch<Question[]>(username ? `/api/questions/owner/${username}` : null);
+
+    const { data: collections, loading: isLoadingCollections, error: errorWithCollections } =
+        useFetch<Collection[]>(username ? `/api/collections/owner/${username}` : null);
+
 
     // * Menu
     const [activeTab, setActiveTab] = useState<"questions" | "collections">("collections");
@@ -25,31 +33,32 @@ export function Dashboard() {
     const toggleOpen = (index: number) => {
         setOpenIndex(openIndex === index ? null : index);
     };
+    let content;
 
-    useEffect(() => {
-        // * Questions by owner
-        fetch(`/api/questions/owner/${getCookie("username")}`)
-            .then(res => res.json())
-            .then(json => {
-                if (Array.isArray(json.data)) {
-                    setQuestions(json.data);
-                }
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
+    if (activeTab === "questions") {
+        if (isLoadingQuestions || !questions) {
+            content = <p>Loading...</p>;
+        } else {
+            content = questions.map((question: Question, idx: number) => (
+                <QuestionDropdown
+                    key={idx}
+                    idx={idx}
+                    question={question}
+                    toggleOpen={toggleOpen}
+                    openIndex={openIndex}
+                />
+            ));
+        }
+    } else {
 
-        // * Collections by owner
-        fetch(`/api/collections/owner/${getCookie("username")}`)
-            .then(res => res.json())
-            .then(json => {
-
-                if (Array.isArray(json.data)) {
-                    setCollections(json.data);
-                }
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, []);
+        if (isLoadingCollections || !collections) {
+            content = <p>Loading...</p>;
+        } else {
+            content = collections.map((c: Collection, idx: number) => (
+                <CollectionItem key={idx} idx={idx} collection={c} id={c._id} />
+            ));
+        }
+    }
 
 
     // * JSX
@@ -78,19 +87,9 @@ export function Dashboard() {
 
             {/* SECTIONS */}
             <div className="section" style={{ maxWidth: "700px", width: "100%", minHeight: "600px" }}>
-                {loading ? (
-                    <h2 className="title is-2">Loading...</h2>
-                ) : (
-                    <div className="block" style={{ height: "700px", overflowY: "scroll", paddingRight: "10px" }}>
-                        {activeTab === "questions" ? questions.map((question: Question, idx: number) =>
-                        (
-                            <QuestionDropdown key={idx} idx={idx} question={question} toggleOpen={toggleOpen} openIndex={openIndex} />
-                        )) : collections.map((c: Collection, idx: number) => (
-                            <CollectionItem key={idx} idx={idx} collection={c} id={c._id} />
-                        ))
-                        }
-                    </div>
-                )}
+                <div className="block" style={{ height: "700px", overflowY: "scroll", paddingRight: "10px" }}>
+                    {content}
+                </div>
 
                 {/* BUTTON & MENU */}
                 <div className="buttons is-centered is-flex-wrap-wrap mt-4">

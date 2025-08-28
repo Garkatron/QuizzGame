@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import type { JSX } from "react";
 import { getCookie } from "~/cookie";
-import type { Question } from "~/owntypes";
+import type { Question } from "~/utils/owntypes";
 
 
 type QuestionDropdownProps = {

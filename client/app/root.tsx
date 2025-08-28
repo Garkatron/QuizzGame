@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { UserProvider } from "./utils/UserContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "stylesheet", href: "/css/bulma.min.css" },
@@ -43,7 +44,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <UserProvider>
+      <Outlet />
+    </UserProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
