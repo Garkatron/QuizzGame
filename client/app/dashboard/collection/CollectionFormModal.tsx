@@ -3,6 +3,7 @@ import { QuestionFormModal } from "../question/QuestionFormModal";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
 import { QuestionDropdown } from "../question/QuestionDropdown";
+import { addCollectionByID, addQuestionByID, deleteCollection, updateCollection } from "~/utils/utils";
 
 type CollectionFormModalProps = {
     active?: boolean;
@@ -28,32 +29,21 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         setQuestions((prev) => prev.filter((_, i) => i !== idx));
     };
 
-    const addQuestion = (qid: string) => {
-        fetch(`/api/questions/id/${qid}`)
-            .then(res => res.json())
-            .then(json => {
-                if (json.data) {
-                    setQuestions(prev => [...prev, json.data]);
-                }
-            })
-            .catch(err => console.error(err));
-    };
 
     // * If edit
     if (id) {
         useEffect(() => {
             // * Questions by owner
-            fetch(`/api/collections/id/${id}`)
-                .then(res => res.json())
-                .then(json => {
-                    if (json.data) {
-                        setQuestions(json.data.questions);
-                        setCollectionName(json.data.name);
-                        setOwnerId(json.data.owner);
-                    }
 
-                })
-                .catch(err => console.error(err));
+            try {
+                addCollectionByID(id).then((data) => {
+                    setQuestions(data.questions);
+                    setCollectionName(data.name);
+                    setOwnerId(data.owner);
+                });
+            } catch (error) {
+                alert(error);
+            }
         }, []);
     }
 
@@ -94,6 +84,9 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                 questions: questions
             };
 
+            await updateCollection({ _id: id, owner: ownerId, name: collectionName, questions, tags: [] });
+
+            /*
             const res = await fetch("/api/collection/edit", {
                 method: "POST",
                 headers: {
@@ -107,7 +100,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
             if (!data.success) {
                 console.error(data);
                 return;
-            }
+            }*/
 
             onClose();
         } catch (err) {
@@ -117,18 +110,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
     const handleDeleteCollection = async () => {
         try {
-            const res = await fetch("/api/collection/delete", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${getCookie("token")}`,
-                },
-                body: JSON.stringify({
-                    owner_id: ownerId,
-                    collection_id: id
-                }),
-            });
-            console.log(res);
+            await deleteCollection(ownerId, id);
         } catch (err) {
             console.log(err);
         }
@@ -227,13 +209,16 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
             </div>
 
             // * FORM
-            <QuestionFormModal active={isQuestionMenuOpen} onAddQuestion={(question_id: string | null) => {
-                if (question_id) {
-                    addQuestion(question_id);
-                }
-                openQuestionMenu(false);
-
-            }} />
+            <QuestionFormModal
+                active={isQuestionMenuOpen}
+                onAddQuestion={async (question_id: string | null) => {
+                    if (question_id) {
+                        const newQ = await addQuestionByID(question_id);
+                        setQuestions((prev) => [...prev, newQ]);
+                    }
+                    openQuestionMenu(false);
+                }}
+            />
             <button className="modal-close is-large" aria-label="close"></button>
         </div>
     );
