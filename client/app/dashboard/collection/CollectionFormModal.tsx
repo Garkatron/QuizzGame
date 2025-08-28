@@ -15,7 +15,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
     const [questions, setQuestions] = useState<Question[]>([]);
     const [collectionName, setCollectionName] = useState<string>("");
     const [isQuestionMenuOpen, openQuestionMenu] = useState<boolean>(false);
-
+    const [ownerId, setOwnerId] = useState<string>("");
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
 
@@ -49,7 +49,9 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                     if (json.data) {
                         setQuestions(json.data.questions);
                         setCollectionName(json.data.name);
+                        setOwnerId(json.data.owner);
                     }
+
                 })
                 .catch(err => console.error(err));
         }, []);
@@ -57,7 +59,6 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
     // * Post
     const handleCreateCollection = async () => {
-
         const res = await fetch("/api/collection/create", {
             method: "POST",
             headers: {
@@ -77,14 +78,44 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
             onClose();
             return data.data._id;
         } else {
-            console.error(data.message);
+            console.error(data);
             return null;
         }
     };
 
-    const handleSaveCollection = () => {
-        onClose();
+    const handleSaveCollection = async () => {
+        if (!id) return;
+
+        try {
+            const body = {
+                collection_id: id,
+                owner_id: ownerId,
+                name: collectionName,
+                questions: questions
+            };
+
+            const res = await fetch("/api/collection/edit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${getCookie("token")}`,
+                },
+                body: JSON.stringify(body),
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                console.error(data);
+                return;
+            }
+
+            onClose();
+        } catch (err) {
+            console.error(err);
+        }
     };
+
+
 
     const handleDeleteCollection = () => {
         onClose();

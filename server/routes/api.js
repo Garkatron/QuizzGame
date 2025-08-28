@@ -252,30 +252,28 @@ export default function MakeEndpoints(app) {
 
     app.post("/api/collection/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), async (req, res) => {
         try {
-            const { field, value, user_name, collection_name } = req.body;
+            const { collection_id, owner_id, name, tags, questions } = req.body;
 
-            const allowedFields = ["name", "tags", "questions"];
-            if (!allowedFields.includes(field)) {
-                return send_response_unsuccessful(res, "Invalid field", ["Field not editable"]);
+            if (!collection_id || !owner_id) {
+                return send_response_unsuccessful(res, "Missing collection_id or owner_id", ["Missing parameters"]);
             }
 
-
-
-            const user = await User.findOne({ name: user_name });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
-            const collection = await QuizzCollection.findOne({ name: collection_name, owner: user._id });
+            const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
             if (!collection) {
                 return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
             }
+
+            const user = await User.findOne({ _id: owner_id });
+            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
             if (!require_ownership_or_admin(user, collection.owner)) {
                 return send_response_unsuccessful(res, "No permission", [NEED_OWNERSHIP_OR_ADMIN]);
             }
 
+            if (name !== undefined) collection.name = name;
+            if (tags !== undefined) collection.tags = tags;
+            if (questions !== undefined) collection.questions = questions;
 
-
-            collection[field] = value;
             await collection.save();
 
             return send_response_successful(res, "Collection edited successfully", collection);
@@ -284,6 +282,7 @@ export default function MakeEndpoints(app) {
             return send_response_unsuccessful(res, "Error editing collection", [error.message]);
         }
     });
+
 
 
 

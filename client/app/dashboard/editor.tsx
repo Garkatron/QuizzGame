@@ -101,7 +101,7 @@ export function Dashboard() {
                     activeTab === "questions" ? // IF
                         (<QuestionFormModal active={isOpenQuestionForm} onAddQuestion={() => { }} />) // Questions
                         :
-                        (<CollectionFormModal active={isOpenQuestionForm} id={null} />)
+                        (<CollectionFormModal active={isOpenQuestionForm} id={null} onClose={() => { }} />)
                 }
             </div>
         </main>
