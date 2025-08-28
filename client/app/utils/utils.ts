@@ -64,26 +64,22 @@ export async function secureFetch<T = any>(
     body?: any,
 ): Promise<Result<T, string>> {
     const requestInitResult = createAuthRequestInit(method, body);
-
-
     if (requestInitResult.isErr) return Result.err(requestInitResult.error);
 
     try {
         const res = await fetch(url, requestInitResult.value);
-
         const json = await res.json().catch(() => null);
 
-        if (!res.ok) {
-            const message = json?.message || `HTTP error: ${res.status}`;
+        if (json?.success === false) {
+            const message = json.message || (json.error ? json.error.toString() : "Unknown API error");
             return Result.err(message);
         }
 
-        return Result.ok(json as T);
+        return Result.ok(json?.data as T);
     } catch (err) {
         return Result.err(err instanceof Error ? err.message : "Unknown error during fetch");
     }
 }
-
 
 export async function updateQuestion(
     qid: string,

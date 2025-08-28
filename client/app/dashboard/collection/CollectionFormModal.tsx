@@ -64,7 +64,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         const res = await updateCollection({ _id: id, owner: ownerId, name: collectionName, questions, tags: [] });
 
         if (res.isErr) {
-            alert("Cant update collection");
+            alert(res.error);
         }
 
         onClose();

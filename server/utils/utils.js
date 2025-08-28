@@ -109,18 +109,18 @@ export function has_valid_email(email) {
 
 // * RESPONSES
 
-export function send_response_unsuccessful(res, message = "", error) {
+export function send_response_unsuccessful(res, message = "", errors = []) {
     return res.status(400).json({
         success: false,
-        message,
-        error
+        message: errors.join(", "),
+        errors
     });
 }
 
-export function send_response_failed_at(res, message, error) {
+export function send_response_failed_at(res, message, errors = []) {
     return res.status(500).json({
         success: false,
-        message,
+        message: errors.join(", "),
         errors: [error.message]
     });
 }
@@ -136,7 +136,7 @@ export function send_response_successful(res, message, data) {
 export function send_response_not_found(res, message, errors = []) {
     return res.status(404).json({
         success: false,
-        message: message,
+        message: errors.join(", "),
         errors: errors
     });
 }

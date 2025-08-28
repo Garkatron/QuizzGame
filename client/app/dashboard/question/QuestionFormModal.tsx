@@ -33,10 +33,9 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
     const handleCreateQuestion = async () => {
         try {
             const res = await createQuestion(questionText, tags.split(",").map(t => t.trim()), answers, answers[0]);
-            console.log(res);
 
-            if (res.success) {
-                return res.data._id;
+            if (res.isOk) {
+                return res.value.data._id;
             } else {
                 console.error(res.error);
                 return null;
