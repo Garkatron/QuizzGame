@@ -25,14 +25,28 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
 
     const handleSaveAll = async () => {
         try {
-            await updateQuestion(question._id, "options", options);
-            await updateQuestion(question._id, "question", name);
-        } catch (error) {
-            console.error(error);
-            alert("Error saving changes");
-        }
+            const originalOptions = [...options];
+            const originalName = name;
 
+            const [resultOptions, resultQuestion] = await Promise.all([
+                updateQuestion(question._id, "options", options),
+                updateQuestion(question._id, "question", name),
+            ]);
+
+            if (!(resultOptions.isOk && resultQuestion.isOk)) {
+                setOptions(originalOptions);
+                setName(originalName);
+                console.error("Update failed:", resultOptions, resultQuestion);
+                alert(
+                    `Failed to update question:\n${resultOptions.isOk ? "" : resultOptions.error}\n${resultQuestion.isOk ? "" : resultQuestion.error}`
+                );
+            }
+        } catch (err) {
+            console.error("Unexpected error in handleSaveAll:", err);
+            alert("An unexpected error occurred while updating the question.");
+        }
     };
+
 
     return (
         <div className="box mb-4 has-text-left">

@@ -8,9 +8,10 @@ export type CollectionItemProps = {
     collection: Collection;
     idx: number;
     id: string;
+    onClose: () => void
 };
 
-export function CollectionItem({ idx, collection, id }: CollectionItemProps): JSX.Element {
+export function CollectionItem({ idx, collection, id, onClose }: CollectionItemProps): JSX.Element {
     const [isActive, setActive] = useState(false);
 
     return (
@@ -24,7 +25,7 @@ export function CollectionItem({ idx, collection, id }: CollectionItemProps): JS
                     ))}
                 </ul>
             </button>
-            <CollectionFormModal active={isActive} id={id} onClose={() => { setActive(false) }} />
+            <CollectionFormModal active={isActive} id={id} onClose={() => { setActive(false); onClose() }} />
 
         </>
     );

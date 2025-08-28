@@ -3,7 +3,7 @@ import { QuestionFormModal } from "../question/QuestionFormModal";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
 import { QuestionDropdown } from "../question/QuestionDropdown";
-import { addCollectionByID, addQuestionByID, deleteCollection, updateCollection } from "~/utils/utils";
+import { addCollectionByID, getQuestionByID, deleteCollection, updateCollection, createCollection } from "~/utils/utils";
 
 type CollectionFormModalProps = {
     active?: boolean;
@@ -49,70 +49,31 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
     // * Post
     const handleCreateCollection = async () => {
-        const res = await fetch("/api/collection/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${getCookie("token")}`,
-            },
-            body: JSON.stringify({
-                user_name: getCookie("username"),
-                questions: questions,
-                tags: [],
-                name: collectionName,
-            }),
-        });
+        const res = await createCollection(questions, [], collectionName);
 
-        const data = await res.json();
-        if (data.success) {
-            onClose();
-            return data.data._id;
-        } else {
-            console.error(data);
-            return null;
+        if (res.isErr) {
+            alert("Error creating collection");
         }
+
+        onClose();
     };
 
     const handleSaveCollection = async () => {
         if (!id) return;
 
-        try {
-            const body = {
-                collection_id: id,
-                owner_id: ownerId,
-                name: collectionName,
-                questions: questions
-            };
+        const res = await updateCollection({ _id: id, owner: ownerId, name: collectionName, questions, tags: [] });
 
-            await updateCollection({ _id: id, owner: ownerId, name: collectionName, questions, tags: [] });
-
-            /*
-            const res = await fetch("/api/collection/edit", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${getCookie("token")}`,
-                },
-                body: JSON.stringify(body),
-            });
-
-            const data = await res.json();
-            if (!data.success) {
-                console.error(data);
-                return;
-            }*/
-
-            onClose();
-        } catch (err) {
-            console.error(err);
+        if (res.isErr) {
+            alert("Cant update collection");
         }
+
+        onClose();
     };
 
     const handleDeleteCollection = async () => {
-        try {
-            await deleteCollection(ownerId, id);
-        } catch (err) {
-            console.log(err);
+        const res = await deleteCollection(ownerId, id);
+        if (res.isErr) {
+            alert("Error deleting collection");
         }
         onClose();
     };
@@ -121,8 +82,6 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         onClose();
 
     };
-
-
 
     // * JSX
     return (
@@ -213,8 +172,12 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                 active={isQuestionMenuOpen}
                 onAddQuestion={async (question_id: string | null) => {
                     if (question_id) {
-                        const newQ = await addQuestionByID(question_id);
-                        setQuestions((prev) => [...prev, newQ]);
+                        const newQ = await getQuestionByID(question_id);
+                        if (newQ.isErr) {
+                            alert("Error getting question");
+                        } else {
+                            setQuestions((prev) => [...prev, newQ.value]);
+                        }
                     }
                     openQuestionMenu(false);
                 }}

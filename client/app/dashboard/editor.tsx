@@ -16,10 +16,10 @@ export function Dashboard() {
     // * State
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-    const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions } =
+    const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions, refetch: refreshQuestions } =
         useFetch<Question[]>(username ? `/api/questions/owner/${username}` : null);
 
-    const { data: collections, loading: isLoadingCollections, error: errorWithCollections } =
+    const { data: collections, loading: isLoadingCollections, error: errorWithCollections, refetch: refreshCollections } =
         useFetch<Collection[]>(username ? `/api/collections/owner/${username}` : null);
 
 
@@ -32,6 +32,15 @@ export function Dashboard() {
         setOpenIndex(openIndex === index ? null : index);
     };
 
+    const handleCloseForm = () => {
+        openForm(false);
+        if (activeTab === "questions") {
+            refreshQuestions();
+        } else {
+            refreshCollections();
+        }
+    };
+
     // * Prepare
     const content = useMemo(() => {
         if (activeTab === "questions") {
@@ -42,7 +51,7 @@ export function Dashboard() {
         } else {
             if (isLoadingCollections || !collections) return <p>Loading...</p>;
             return collections.map((c, idx) => (
-                <CollectionItem key={idx} idx={idx} collection={c} id={c._id} />
+                <CollectionItem key={idx} idx={idx} collection={c} id={c._id} onClose={() => handleCloseForm()} />
             ));
         }
     }, [activeTab, questions, collections, openIndex, isLoadingQuestions, isLoadingCollections]);
@@ -85,9 +94,9 @@ export function Dashboard() {
 
                 {
                     activeTab === "questions" ? // IF
-                        (<QuestionFormModal active={isFormOpen} onAddQuestion={() => { }} />) // Questions
+                        (<QuestionFormModal active={isFormOpen} onAddQuestion={() => { handleCloseForm() }} />)
                         :
-                        (<CollectionFormModal active={isFormOpen} id={null} onClose={() => { }} />)
+                        (<CollectionFormModal active={isFormOpen} id={null} onClose={() => { handleCloseForm() }} />)
                 }
             </div>
         </main>
