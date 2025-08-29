@@ -59,16 +59,23 @@ export function Dashboard() {
 
     // * JSX
     return (
-        <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
+        <main>
             {/* BANNER */}
-            <div
-                className="has-text-centered p-6"
-                style={{ maxWidth: "700px", width: "100%", maxHeight: "200px" }}
-            >
-                <h1 className="title is-2 mb-4">Quiz Builder</h1>
-                <h2 className="subtitle is-4 mb-5">Manage your questions and collections</h2>
+            <div className="hero is-info has-text-centered p-6">
+                <h1 className="title is-2 mb-4">Quiz Finder</h1>
+                <h2 className="subtitle is-4 mb-5">Search quizzes and questions</h2>
 
-                {/* TABS */}
+                <nav className="panel">
+                    <div className="panel-block">
+                        <p className="control has-icons-left">
+                            <input className="input" type="text" placeholder="Search" onChange={(e) => { }} />
+                            <span className="icon is-left">
+                                <i className="fas fa-search" aria-hidden="true"></i>
+                            </span>
+                        </p>
+                    </div>
+                </nav>
+
                 <div className="tabs is-centered mb-5">
                     <ul>
                         <li className={activeTab === "questions" ? "is-active" : ""}>
@@ -80,24 +87,41 @@ export function Dashboard() {
                     </ul>
                 </div>
             </div>
+            <div style={{ maxWidth: "700px", width: "100%" }}>
+                {/* SCROLLABLE BLOCK */}
+                <div className="columns is-multiline is-variable is-3 px-5">
 
-            {/* SECTIONS */}
-            <div className="section" style={{ maxWidth: "700px", width: "100%", minHeight: "600px" }}>
-                <div className="block" style={{ height: "700px", overflowY: "scroll", paddingRight: "10px" }}>
-                    {content}
+                    {
+                        content
+
+                    }
+                    {/* BUTTONS */}
+                    <div className="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen">
+                        <div className="box has-text-centered p-5">
+                            <button
+                                onClick={() => openForm(!isFormOpen)}
+                                className="button is-success is-fullwidth is-fullheight"
+                            >
+                                New
+                            </button>
+
+                        </div>
+                    </div>
+
                 </div>
+                {activeTab === "questions" ? (
+                    <QuestionFormModal
+                        active={isFormOpen}
+                        onAddQuestion={() => handleCloseForm()}
+                    />
+                ) : (
+                    <CollectionFormModal
+                        active={isFormOpen}
+                        id={null}
+                        onClose={() => handleCloseForm()}
+                    />
+                )}
 
-                {/* BUTTON & MENU */}
-                <div className="buttons is-centered is-flex-wrap-wrap mt-4">
-                    <button onClick={() => { openForm(!isFormOpen) }} className="button is-success mb-2 mr-2">New</button>
-                </div>
-
-                {
-                    activeTab === "questions" ? // IF
-                        (<QuestionFormModal active={isFormOpen} onAddQuestion={() => { handleCloseForm() }} />)
-                        :
-                        (<CollectionFormModal active={isFormOpen} id={null} onClose={() => { handleCloseForm() }} />)
-                }
             </div>
         </main>
     );

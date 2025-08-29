@@ -16,6 +16,9 @@ export function MultiplayerQuizz() {
                     <button className="button is-danger is-light">Lisbon</button>
                 </div>
 
+                {
+
+                }
 
             </div>
         </main>
