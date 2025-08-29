@@ -119,7 +119,7 @@ export async function createQuestion(question: string, tags: string[], options: 
     }
 
     if (!res.ok) Result.err("Failed to create question");
-    return Result.ok(res.json());
+    return Result.ok(await res.json());
 }
 export async function getQuestionByID(qid: string) {
     return await secureFetch("GET", `/api/questions/id/${qid}`);

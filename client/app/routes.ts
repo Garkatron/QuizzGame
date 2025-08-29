@@ -6,6 +6,6 @@ export default [
     route("/register", "routes/register.tsx"),
 
     route("/quiz/dashboard", "routes/dashboard.tsx"),
-    route("/quiz/singleplayer", "routes/quizz.single.tsx"),
+    route("/quiz/singleplayer/:id", "routes/quizz.single.tsx"),
     route("/quiz/multiplayer", "routes/quizz.multi.tsx"),
 ] satisfies RouteConfig;

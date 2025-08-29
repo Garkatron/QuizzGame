@@ -1,29 +1,37 @@
 import { useState, useEffect } from "react";
+import type { Collection } from "~/utils/owntypes";
+import { useFetch } from "~/utils/utils";
 
-export function SingleplayerQuizz() {
+export function SingleplayerQuizz({ id }: { id: string }) {
 
     const [questions, setQuestions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [feedbackClass, setFeedbackClass] = useState("");
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+    const { data: collectionData, loading: collectionLoading, error: errorLoadingCollection, refetch: refreshCollection } = useFetch<Collection>(`/api/collections/id/${id}`);
 
     const randomQuestionNumber = (l: number) => Math.floor(Math.random() * l);
 
     useEffect(() => {
-        fetch("/api/questions")
-            .then(res => res.json())
-            .then(json => {
-                if (Array.isArray(json.data)) {
+        if (id === "0") {
+            fetch("/api/questions")
+                .then(res => res.json())
+                .then(json => {
+                    if (Array.isArray(json.data)) {
+                        setQuestions(json.data);
+                        setCurrentIndex(randomQuestionNumber(json.data.length));
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => setLoading(false));
+        } else if (collectionData) {
+            setQuestions(collectionData.questions);
+            setCurrentIndex(randomQuestionNumber(collectionData.questions.length));
+            setLoading(false);
+        }
+    }, [id, collectionData]);
 
-                    setQuestions(json.data);
-                    setCurrentIndex(randomQuestionNumber(json.data.length));
-
-                }
-            })
-            .catch(err => console.error(err))
-            .finally(() => setLoading(false));
-    }, []);
 
 
     const nextQuestion = () => {

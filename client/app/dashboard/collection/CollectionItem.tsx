@@ -18,7 +18,7 @@ export function CollectionItem({ idx, collection, id, onClose }: CollectionItemP
 
         <>
             <button className="box button" onClick={() => setActive(!isActive)}>
-                <span>{collection.name}</span>
+                <span>{collection.name}</span> <br /> <span>{collection._id}</span>
                 <ul>
                     {collection.tags.map((t: string, i: number) => (
                         <li key={i}>{t}</li>

@@ -354,7 +354,6 @@ export default function MakeEndpoints(app) {
         }
     });
 
-
     app.get("/api/questions/owner/:ownername", async (req, res) => {
         try {
             const { ownername } = req.params;

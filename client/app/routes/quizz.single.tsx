@@ -1,5 +1,6 @@
 import { SingleplayerQuizz } from "~/quizz/quizz.single";
 import type { Route } from "./+types/home";
+import { useParams } from "react-router";
 
 export function meta({ }: Route.MetaArgs) {
     return [
@@ -9,5 +10,6 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Home() {
-    return <SingleplayerQuizz />;
+    const { id } = useParams<{ id: string }>();
+    return <SingleplayerQuizz id={id!} />;
 }
