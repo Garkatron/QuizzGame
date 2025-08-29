@@ -49,15 +49,44 @@ export async function compare_password(password, hash) {
 }
 
 // * DB
+/*
+export async function user_not_exists({ name, id, email }) {
+    let query = null;
 
-export async function user_not_exists(name) {
-    const user = await User.findOne({ name });
+    if (id) {
+        query = { _id: id };
+    } else if (email) {
+        query = { email };
+    } else if (name) {
+        query = { name };
+    } else {
+        throw new Error("Should provide name, id or email.");
+    }
+
+    const user = await User.findOne(query);
     if (user) throw new Error(USER_EXISTS);
-}
 
-export async function user_exists(name) {
-    const user = await User.findOne({ name });
+    return null;
+}*/
+
+
+export async function user_exists({ name, id, email }) {
+    let query = null;
+
+    if (id) {
+        query = { _id: id };
+    } else if (email) {
+        query = { email };
+    } else if (name) {
+        query = { name };
+    } else {
+        throw new Error("Should provide name, id or email.");
+    }
+
+    const user = await User.findOne(query);
     if (!user) throw new Error(USER_NOT_EXISTS);
+
+    return user;
 }
 
 export async function does_user_exist(name) {
@@ -109,36 +138,31 @@ export function has_valid_email(email) {
 
 // * RESPONSES
 
-export function send_response_unsuccessful(res, message = "", errors = []) {
-    return res.status(400).json({
-        success: false,
-        message: errors.join(", "),
-        errors
-    });
+function send_response(res, statusCode, success, message = "", data = null) {
+    const response = { success, message };
+
+    if (data !== null) {
+        response.data = data;
+    }
+
+    return res.status(statusCode).json(response);
 }
 
-export function send_response_failed_at(res, message, errors = []) {
-    return res.status(500).json({
-        success: false,
-        message: errors.join(", "),
-        errors: [error.message]
-    });
-}
-
+// Helpers específicos
 export function send_response_successful(res, message, data) {
-    return res.status(200).json({
-        success: true,
-        message,
-        data
-    });
+    return send_response(res, 200, true, message, data);
 }
 
-export function send_response_not_found(res, message, errors = []) {
-    return res.status(404).json({
-        success: false,
-        message: errors.join(", "),
-        errors: errors
-    });
+export function send_response_unsuccessful(res, errors = []) {
+    return send_response(res, 400, false, errors.join(", "));
+}
+
+export function send_response_failed_at(res, errors = []) {
+    return send_response(res, 500, false, errors.join(", "));
+}
+
+export function send_response_not_found(res, errors = []) {
+    return send_response(res, 404, false, errors.join(", "));
 }
 
 // Tokens

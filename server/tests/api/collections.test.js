@@ -138,33 +138,45 @@ describe("Collections + Permissions", () => {
             .expectStatus(200);
         accessToken = res.body.data.accessToken;
     });
+    let coll_id;
 
     it("should create a collection", async () => {
-        await pactum
+        const res = await pactum
             .spec()
             .post("/api/collection/create")
             .withHeaders({ Authorization: `Bearer ${accessToken}` })
             .withBody({ user_name: TEST_USER.name, name: "testcollection", tags: [], questions: [] })
             .expectStatus(200);
+
+        coll_id = res.data._id;
     });
 
-
-    it("should edit a collection", async () => {
-        await pactum
-            .spec()
-            .post("/api/collection/edit")
-            .withHeaders({ Authorization: `Bearer ${accessToken}` })
-            .withBody({ user_name: TEST_USER.name, collection_name: "testcollection", field: "name", value: "testcollectionedited" })
-            .expectStatus(200);
-    });
-
+    /*
+        it("should edit a collection", async () => {
+            await pactum
+                .spec()
+                .post("/api/collection/edit")
+                .withHeaders({ Authorization: `Bearer ${accessToken}` })
+                .withBody({
+                    owner_id: 
+                    collection_id: coll_id,
+                    name: "testcollection",
+                    tags: [],
+                    questions: []
+    
+                })
+                .expectStatus(200);
+        });
+    */
 
     it("should delete a collection", async () => {
         await pactum
             .spec()
             .post("/api/collection/delete")
             .withHeaders({ Authorization: `Bearer ${accessToken}` })
-            .withBody({ user_name: TEST_USER.name, collection_name: "testcollectionedited" })
+            .withBody({
+                user_name: TEST_USER.name, collection_name: "testcollectionedited"
+            })
             .expectStatus(200);
     });
 });

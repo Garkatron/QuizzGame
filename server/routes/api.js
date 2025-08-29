@@ -1,6 +1,6 @@
 import { Question, QuizzCollection, User } from "../db/models.js"
-import { compare_password, send_response_failed_at, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, user_not_exists, does_user_exist, is_valid_string, generate_access_token } from "../utils/utils.js"
-import { COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_OWNERSHIP_OR_ADMIN, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_NOT_EXISTS, UserPermissions } from "../constants.js"
+import { compare_password, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, does_user_exist, is_valid_string, generate_access_token } from "../utils/utils.js"
+import { COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_OWNERSHIP_OR_ADMIN, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
 import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
 function require_ownership_or_admin(user, resourceOwnerId) {
@@ -15,7 +15,9 @@ function MakeOuthPoints(app) {
             const { name, email, password } = req.body;
 
             has_valid_name(name);
-            await user_not_exists(name);
+
+            const user = await User.findOne({ name });
+            if (user) throw new Error(USER_EXISTS);
 
             has_valid_email(email);
             await email_not_used(email);
@@ -35,7 +37,7 @@ function MakeOuthPoints(app) {
             return send_response_successful(res, "User created succefully", { id: newUser._id, name: newUser.name, email: newUser.email })
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at register user", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -43,14 +45,11 @@ function MakeOuthPoints(app) {
         try {
             const { name, password } = req.body;
 
-            const user = await User.findOne({ name });
-            if (!user) {
-                return send_response_not_found(res, "Not found user", [NOT_FOUND_USER]);
-            }
+            const user = await user_exists({ name });
 
             const isMatch = await compare_password(password, user.password);
             if (!isMatch) {
-                return send_response_unsuccessful(res, "Bad password", [INVALID_PASSWORD]);
+                return send_response_unsuccessful(res, [INVALID_PASSWORD]);
             }
 
             const accessToken = generate_access_token(name, user.permissions);
@@ -61,7 +60,7 @@ function MakeOuthPoints(app) {
             });
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error searching user", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -73,19 +72,21 @@ function MakeOuthPoints(app) {
             has_valid_name(name);
 
             if (!does_user_exist(name)) {
-                return send_response_not_found(res, "Not found user", [NOT_FOUND_USER])
+                return send_response_not_found(res, [NOT_FOUND_USER])
             }
 
             // has_valid_password(password);
 
-            const user = await User.findOne({ name });
-            if (!user) {
+            const user = await user_exists({ name });
+
+            // const user = await User.findOne({ name });
+            /* if (!user) {
                 return res.status(404).json({
                     success: false,
                     message: "User don't found",
                     errors: ["Not exists an user with this name"]
                 });
-            }
+            }*/
 
             // const isMatch = await compare_password(password, user.password);
             // if (!isMatch) {
@@ -93,10 +94,10 @@ function MakeOuthPoints(app) {
             // }
 
             const deleted = await User.deleteOne({ name: user.name })
-            return send_response_successful(res, "User deleted successfully", deleted);
+            return send_response_successful(res, deleted);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at deleting user", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -107,13 +108,14 @@ function MakeOuthPoints(app) {
 
             const allowedFields = ["email", "password", "permissions"];
             if (!allowedFields.includes(field)) {
-                return send_response_unsuccessful(res, "Invalid field", ["Field not editable"]);
+                return send_response_unsuccessful(res, ["Field not editable"]);
             }
 
-            const user = await User.findOne({ name });
-            if (!user) return send_response_unsuccessful(res, "This User doesn't exist", [USER_NOT_EXISTS]);
+            const user = await user_exists({ name });
 
-            // Validaciones
+            // const user = await User.findOne({ name });
+            // if (!user) return send_response_unsuccessful(res, "This User doesn't exist", [USER_NOT_EXISTS]);
+
             if (field === "email") has_valid_email(value);
             if (field === "password") {
                 const hashed = await hash_password(value);
@@ -122,11 +124,11 @@ function MakeOuthPoints(app) {
                 await user.updateOne({ [field]: value });
             }
 
-            const updatedUser = await User.findOne({ name }); // Traer datos actualizados
+            const updatedUser = await User.findOne({ name });
             return send_response_successful(res, "User edited successfully", updatedUser);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at editing User", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 }
@@ -139,8 +141,6 @@ export default function MakeEndpoints(app) {
 
     MakeOuthPoints(app);
 
-    // QUESTION CRUD
-
     app.post("/api/question/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), async (req, res) => {
         try {
             const { id } = req.body;
@@ -150,10 +150,10 @@ export default function MakeEndpoints(app) {
                 const deleted = await Question.deleteOne({ _id: id });
                 return send_response_successful(res, "Question deleted successfully", deleted);
             } else {
-                return send_response_unsuccessful(res, "This question doesn't exist", [QUESTION_NOT_FOUND]);
+                return send_response_unsuccessful(res, [QUESTION_NOT_FOUND]);
             }
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at deleting question", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -163,7 +163,7 @@ export default function MakeEndpoints(app) {
 
             const allowedFields = ["question", "options", "answer"];
             if (!allowedFields.includes(field)) {
-                return send_response_unsuccessful(res, "Invalid field", ["Field not editable"]);
+                return send_response_unsuccessful(res, ["Field not editable"]);
             }
 
             const question = await Question.findOne({ _id: id });
@@ -171,10 +171,10 @@ export default function MakeEndpoints(app) {
                 await question.updateOne({ [field]: value });
                 return send_response_successful(res, "Question edited successfully", question);
             } else {
-                return send_response_unsuccessful(res, "This question doesn't exist", [QUESTION_NOT_FOUND]);
+                return send_response_unsuccessful(res, [QUESTION_NOT_FOUND]);
             }
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at editing question", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -185,26 +185,27 @@ export default function MakeEndpoints(app) {
             const { user_name, question_text, options, answer, tags } = req.body;
 
             if (!is_valid_string(question_text) || !is_valid_string(answer)) {
-                return send_response_unsuccessful(res, "Invalid question or answer text", [INVALID_STRING]);
+                return send_response_unsuccessful(res, [INVALID_STRING]);
             }
             if (!Array.isArray(options) || options.length < MIN_OPTIONS) {
-                return send_response_unsuccessful(res, "Invalid options", [INVALID_OPTIONS_ARRAY]);
+                return send_response_unsuccessful(res, [INVALID_OPTIONS_ARRAY]);
             }
             if (!Array.isArray(tags)) {
-                return send_response_unsuccessful(res, "Invalid tags", [INVALID_TAGS_ARRAY]);
+                return send_response_unsuccessful(res, [INVALID_TAGS_ARRAY]);
             }
             if (!options.includes(answer)) {
-                return send_response_unsuccessful(res, "Invalid answer", [OPTIONS_MUST_INCLUDE_ANSWER]);
+                return send_response_unsuccessful(res, [OPTIONS_MUST_INCLUDE_ANSWER]);
             }
 
-            const user = await User.findOne({ name: user_name });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+            const user = await user_exists({ name: user_name });
 
+            // const user = await User.findOne({ name: user_name });
+            // if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
             const existing = await Question.findOne({ question: question_text, owner: user._id });
 
             if (existing) {
-                return send_response_unsuccessful(res, "This question already exists", [QUESTION_ALREADY_EXISTS]);
+                return send_response_unsuccessful(res, [QUESTION_ALREADY_EXISTS]);
             }
 
             const newQuestion = new Question({ question: question_text, options, answer, tags, owner: user._id });
@@ -213,7 +214,7 @@ export default function MakeEndpoints(app) {
             return send_response_successful(res, "Question created successfully", newQuestion);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error at creating question", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -223,30 +224,32 @@ export default function MakeEndpoints(app) {
             const { user_name, name, tags, questions } = req.body;
 
             if (!is_valid_string(name)) {
-                return send_response_unsuccessful(res, "Invalid collection name", [INVALID_STRING]);
+                return send_response_unsuccessful(res, [INVALID_STRING]);
             }
             if (!Array.isArray(tags)) {
-                return send_response_unsuccessful(res, "Invalid tags", [INVALID_TAGS_ARRAY]);
+                return send_response_unsuccessful(res, [INVALID_TAGS_ARRAY]);
             }
             if (!Array.isArray(questions)) {
-                return send_response_unsuccessful(res, "Invalid questions", [INVALID_QUESTIONS_ARRAY]);
+                return send_response_unsuccessful(res, [INVALID_QUESTIONS_ARRAY]);
             }
 
             const existing = await QuizzCollection.findOne({ name });
 
             if (existing) {
-                return send_response_unsuccessful(res, "This collection already exists", [COLLECTION_ALREADY_EXISTS]);
+                return send_response_unsuccessful(res, [COLLECTION_ALREADY_EXISTS]);
             }
 
-            const user = await User.findOne({ name: user_name });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+            const user = await user_exists({ name: user_name });
+
+            // const user = await User.findOne({ name: user_name });
+            // if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
             const newCollection = new QuizzCollection({ name, tags, questions, owner: user._id });
             newCollection.save();
 
             return send_response_successful(res, "Collection created", newCollection);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error creating collection", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -255,19 +258,21 @@ export default function MakeEndpoints(app) {
             const { collection_id, owner_id, name, tags, questions } = req.body;
 
             if (!collection_id || !owner_id) {
-                return send_response_unsuccessful(res, "Missing collection_id or owner_id", ["Missing parameters"]);
+                return send_response_unsuccessful(res, ["Missing parameters"]);
             }
 
             const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
             if (!collection) {
-                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
+                return send_response_unsuccessful(res, [COLLECTION_NOT_FOUND]);
             }
 
-            const user = await User.findOne({ _id: owner_id });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+            const user = await user_exists({ id: owner_id });
+
+            //const user = await User.findOne({ _id: owner_id });
+            //if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
             if (!require_ownership_or_admin(user, collection.owner)) {
-                return send_response_unsuccessful(res, "No permission", [NEED_OWNERSHIP_OR_ADMIN]);
+                return send_response_unsuccessful(res, [NEED_OWNERSHIP_OR_ADMIN]);
             }
 
             if (name !== undefined) collection.name = name;
@@ -279,7 +284,7 @@ export default function MakeEndpoints(app) {
             return send_response_successful(res, "Collection edited successfully", collection);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error editing collection", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -290,18 +295,16 @@ export default function MakeEndpoints(app) {
         try {
             const { owner_id, collection_id } = req.body;
 
-            const user = await User.findOne({ _id: owner_id });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
+            const user = await user_exists({ id: owner_id });
 
             const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
 
             if (!collection) {
-                return send_response_unsuccessful(res, "Collection not found", [COLLECTION_NOT_FOUND]);
+                return send_response_unsuccessful(res, [COLLECTION_NOT_FOUND]);
             }
 
             if (!require_ownership_or_admin(user, collection.owner)) {
-                return send_response_unsuccessful(res, "No permission", [NEED_OWNERSHIP_OR_ADMIN]);
+                return send_response_unsuccessful(res, [NEED_OWNERSHIP_OR_ADMIN]);
             }
 
 
@@ -310,7 +313,7 @@ export default function MakeEndpoints(app) {
             return send_response_successful(res, "Collection deleted successfully", collection);
 
         } catch (error) {
-            return send_response_unsuccessful(res, "Error deleting  collection", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -323,7 +326,7 @@ export default function MakeEndpoints(app) {
                 .populate("questions");
             return send_response_successful(res, "Quizz Collections", quizzCollections);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -332,14 +335,12 @@ export default function MakeEndpoints(app) {
 
             const { ownername } = req.params;
 
-            const user = await User.findOne({ name: ownername });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
+            const user = await user_exists({ name: ownername });
 
             const quizzCollections = await QuizzCollection.find({ owner: user._id }).populate("questions");
             return send_response_successful(res, "Quizz Collections", quizzCollections);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrieving Quizz Collections for " + ownername, [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
 
         }
     });
@@ -349,7 +350,7 @@ export default function MakeEndpoints(app) {
             const quizzCollections = await QuizzCollection.find();
             return send_response_successful(res, "Quizz Collections", quizzCollections);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrievingdiferen Quizz Collections tion with id" + req.params.id, [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -358,13 +359,12 @@ export default function MakeEndpoints(app) {
         try {
             const { ownername } = req.params;
 
-            const user = await User.findOne({ name: ownername });
-            if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
+            const user = await user_exists({ name: ownername });
 
             const questions = await Question.find({ owner: user._id });
             return send_response_successful(res, "Questions", questions);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrieving question with id" + req.params.id, [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -374,7 +374,7 @@ export default function MakeEndpoints(app) {
             const question = await Question.findById(id);
             return send_response_successful(res, "Question", question);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrieving question with id" + req.params.id, [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
@@ -383,7 +383,7 @@ export default function MakeEndpoints(app) {
             const questions = await Question.find();
             return send_response_successful(res, "Questions", questions);
         } catch (error) {
-            return send_response_unsuccessful(res, "Error retrieving questions", [error.message]);
+            return send_response_unsuccessful(res, [error.message]);
         }
     });
 
