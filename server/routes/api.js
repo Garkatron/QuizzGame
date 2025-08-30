@@ -131,6 +131,18 @@ function MakeOuthPoints(app) {
             return send_response_unsuccessful(res, [error.message]);
         }
     });
+
+    app.get("/api/users", middleware_authenticate_token, async (req, res) => {
+        try {
+
+            const users = await User.find();
+
+            return send_response_successful(res, "Login successful", users);
+
+        } catch (error) {
+            return send_response_unsuccessful(res, [error.message]);
+        }
+    });
 }
 
 export default function MakeEndpoints(app) {
