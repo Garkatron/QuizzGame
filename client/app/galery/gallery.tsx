@@ -6,6 +6,8 @@ import "./custom.css";
 import { QuestionGalleryItem } from "~/dashboard/question/QuestionGalleryItem";
 import { useUser } from "~/utils/UserContext";
 import { UserGalleryItem } from "~/dashboard/UserGalleryItem";
+import { CollectionFormModal } from "~/dashboard/collection/CollectionFormModal";
+import { QuestionFormModal } from "~/dashboard/question/QuestionFormModal";
 
 export function Gallery() {
     const { data: collections, loading: isLoadingCollections, error: errorWithCollections, refetch: refreshCollections } =
@@ -20,6 +22,7 @@ export function Gallery() {
 
     const [activeTab, setActiveTab] = useState<"questions" | "collections" | "users">("questions");
 
+    const [isMenuOpen, openMenu] = useState(false);
 
     const hasPermission = usePermissions();
 
@@ -32,6 +35,15 @@ export function Gallery() {
         name = "Question Finder";
     } else {
         name = "User Finder";
+    }
+
+    let buttonName = "New";
+    if (activeTab === "collections") {
+        buttonName = "New Quiz";
+    } else if (activeTab === "questions") {
+        buttonName = "New Question";
+    } else {
+        buttonName = "New User";
     }
 
     const filteredCollections = useMemo(() => {
@@ -51,7 +63,7 @@ export function Gallery() {
     }, [questions, search]);
 
     const questionsContent = filteredQuestions.map((question, key) => (
-        <QuestionGalleryItem key={question._id} question={question} editable={hasPermission("EDIT_QUESTION")} onUpdate={refreshQuestions} />
+        <QuestionGalleryItem small={false} key={question._id} question={question} editable={hasPermission("EDIT_QUESTION")} onUpdate={refreshQuestions} />
     ));
 
     const filteredUsers = useMemo(() => {
@@ -129,7 +141,18 @@ export function Gallery() {
 
             <div className="columns is-multiline is-variable is-3 px-5">
                 {renderContent()}
+                <div className="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen">
+                    <div className="is-flex is-justify-content-space-between is-align-items-center p-2">
+                        <button className="button is-success" onClick={() => { openMenu(true) }}>
+                            {
+                                buttonName
+                            }
+                        </button>
+                    </div>
+                </div>
             </div>
+            <CollectionFormModal active={activeTab == "collections" && isMenuOpen} id={null} onClose={() => { openMenu(false); refreshCollections() }} />
+            <QuestionFormModal active={activeTab == "questions" && isMenuOpen} onAddQuestion={() => { openMenu(false); refreshQuestions(); }} />
         </main>
 
     );

@@ -9,10 +9,11 @@ import { deleteQuestion, updateQuestion } from "~/utils/utils";
 type QuestionGalleryItemProps = {
     question: Question;
     editable: boolean;
+    small: boolean; // ! Trick
     onUpdate: () => void;
 };
 
-export function QuestionGalleryItem({ question, editable = true, onUpdate }: QuestionGalleryItemProps): JSX.Element {
+export function QuestionGalleryItem({ question, editable = true, onUpdate, small = false }: QuestionGalleryItemProps): JSX.Element {
     const [options, setOptions] = useState<string[]>(question.options);
     const [name, setName] = useState<string>(question.question);
     const [active, setActive] = useState<boolean>(false);
@@ -27,7 +28,7 @@ export function QuestionGalleryItem({ question, editable = true, onUpdate }: Que
         setActive(false);
         const res = await deleteQuestion(question._id);
         if (res.isErr) {
-            alert(res.variant);
+            alert(res.error);
         }
         onUpdate();
 
@@ -59,7 +60,7 @@ export function QuestionGalleryItem({ question, editable = true, onUpdate }: Que
 
 
     return (
-        <div className="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen">
+        <div className={`column ${!small && "is-12-mobile is-6-tablet is-4-desktop is-3-widescreen"}`}>
             {/* Header */}
             <div
                 className="is-flex is-justify-content-space-between is-align-items-center p-2"

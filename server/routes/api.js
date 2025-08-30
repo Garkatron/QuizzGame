@@ -1,6 +1,6 @@
 import { Question, QuizzCollection, User } from "../db/models.js"
 import { compare_password, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, does_user_exist, is_valid_string, generate_access_token, has_ownership_or_admin } from "../utils/utils.js"
-import { COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_OWNERSHIP_OR_ADMIN, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
+import { COLLECTION_ALREADY_EXISTS, COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_ANSWER, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
 import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
 // * ------------------------------------------------------------------------------------------
@@ -38,7 +38,18 @@ function MakeOuthPoints(app) {
                 name,
                 email,
                 password: await hash_password(password),
-                permissions: Object.fromEntries(Object.keys(UserPermissions).map(p => [p, false])),
+                permissions: {
+                    [UserPermissions.ADMIN]: false,
+                    [UserPermissions.EDIT_QUESTION]: true,
+                    [UserPermissions.DELETE_QUESTION]: true,
+                    [UserPermissions.CREATE_QUESTION]: true,
+                    [UserPermissions.CREATE_COLLECTION]: true,
+                    [UserPermissions.EDIT_COLLECTION]: true,
+                    [UserPermissions.DELETE_COLLECTION]: true,
+                    [UserPermissions.EDIT_USER]: false,
+                    [UserPermissions.DELETE_USER]: false,
+                    [UserPermissions.CREATE_USER]: false,
+                },
                 score: 0
             });
 
@@ -170,10 +181,10 @@ export default function MakeEndpoints(app) {
             const question = await Question.findOne({ _id: id });
 
             const user = await user_exists({ name: req.user.name });
-            has_ownership_or_admin(user, userToUpdate._id);
+            has_ownership_or_admin(user, question._id);
 
             if (question) {
-                const deleted = await Question.deleteOne({ _id: id });
+                const deleted = await question.deleteOne();
                 return send_response_successful(res, "Question deleted successfully", deleted);
             } else {
                 return send_response_unsuccessful(res, [QUESTION_NOT_FOUND]);
@@ -197,7 +208,7 @@ export default function MakeEndpoints(app) {
             const question = await Question.findOne({ _id: id });
 
             const user = await user_exists({ name: req.user.name });
-            has_ownership_or_admin(user, userToUpdate._id);
+            has_ownership_or_admin(user, question._id);
 
             if (question) {
                 await question.updateOne({ [field]: value });
@@ -215,9 +226,14 @@ export default function MakeEndpoints(app) {
         try {
             const { user_name, question_text, options, answer, tags } = req.body;
 
-            if (!is_valid_string(question_text) || !is_valid_string(answer)) {
+            if (!is_valid_string(question_text)) {
                 return send_response_unsuccessful(res, [INVALID_STRING]);
             }
+
+            if (!is_valid_string(answer)) {
+                return send_response_unsuccessful(res, [NEED_ANSWER]);
+            }
+
             if (!Array.isArray(options) || options.length < MIN_OPTIONS) {
                 return send_response_unsuccessful(res, [INVALID_OPTIONS_ARRAY]);
             }
@@ -246,7 +262,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-    // ? Receive { user_name, name, tags, questions }, create a new quiz collection.
+    // ? Receive { name, tags, questions }, create a new quiz collection.
     app.post("/api/collection/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]), async (req, res) => {
         try {
             const { user_name, name, tags, questions } = req.body;
@@ -261,13 +277,12 @@ export default function MakeEndpoints(app) {
                 return send_response_unsuccessful(res, [INVALID_QUESTIONS_ARRAY]);
             }
 
-            const existing = await QuizzCollection.findOne({ name });
+            const user = await user_exists({ name: req.user.name });
+            const existing = await QuizzCollection.findOne({ name, owner: user._id });
 
             if (existing) {
                 return send_response_unsuccessful(res, [COLLECTION_ALREADY_EXISTS]);
             }
-
-            const user = await user_exists({ name: user_name });
 
             const newCollection = new QuizzCollection({ name, tags, questions, owner: user._id });
             newCollection.save();
@@ -281,22 +296,29 @@ export default function MakeEndpoints(app) {
     // ? Receive { collection_id, owner_id, name, tags, questions }, update a collection if authorized.
     app.post("/api/collection/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), async (req, res) => {
         try {
-            const { collection_id, owner_id, name, tags, questions } = req.body;
+            const { collection_id, name, tags, questions } = req.body;
 
+            const user = await user_exists({ name: req.user.name });
 
-            if (!collection_id || !owner_id) {
+            if (!collection_id) {
                 return send_response_unsuccessful(res, ["Missing parameters"]);
             }
 
-            const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
+            const collection = await QuizzCollection.findOne({ _id: collection_id, owner: user._id });
             if (!collection) {
                 return send_response_unsuccessful(res, [COLLECTION_NOT_FOUND]);
             }
 
-            const user = await user_exists({ name: req.user.name });
             has_ownership_or_admin(user, collection.owner);
 
             if (name !== undefined) collection.name = name;
+
+            const existing = await QuizzCollection.findOne({ name: name, owner: user._id });
+
+            if (existing) {
+                return send_response_unsuccessful(res, [COLLECTION_ALREADY_EXISTS]);
+            }
+
             if (tags !== undefined) collection.tags = tags;
             if (questions !== undefined) collection.questions = questions;
 

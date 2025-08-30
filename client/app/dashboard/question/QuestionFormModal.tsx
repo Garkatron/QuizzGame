@@ -31,17 +31,11 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
 
     // * POST
     const handleCreateQuestion = async () => {
-        try {
-            const res = await createQuestion(questionText, tags.split(",").map(t => t.trim()), answers, answers[0]);
-
-            if (res.isOk) {
-                return res.value.data._id;
-            } else {
-                console.error(res.error);
-                return null;
-            }
-        } catch (error) {
-            alert(error);
+        const res = await createQuestion(questionText, tags.split(",").map(t => t.trim()), answers, answers[0]);
+        if (res.isOk) {
+            return res.value._id;
+        } else {
+            alert(res.error)
             return null;
         }
     };
@@ -61,7 +55,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                 className="input"
                                 type="text"
                                 onChange={(e) => setQuestionText(e.target.value)}
-
+                                value={questionText}
                                 placeholder="Enter your question"
                                 required
                             />
@@ -105,7 +99,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                         className="button is-danger"
                                         onClick={() => deleteQuestion(idx)}
                                     >
-                                        Delete
+                                        Remove
                                     </button>
                                 </div>
                             </div>
@@ -137,7 +131,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                     </div>
                 </form>
             </div >
-            <button className="modal-close is-large" aria-label="close"></button>
+            <button onClick={() => { onAddQuestion(null) }} className="modal-close is-large" aria-label="close"></button>
         </div >
     );
 }

@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { EMAIL_TAKEN, INVALID_NAME, INVALID_PASSWORD, PASSWORD_SALT_ROUNDS, REGEX_EMAIL, REGEX_PASSWORD, REGEX_PASSWORD_SIMPLE, USER_EXISTS, USER_NOT_EXISTS } from "../constants.js"
+import { EMAIL_TAKEN, INVALID_NAME, INVALID_PASSWORD, NEED_OWNERSHIP_OR_ADMIN, PASSWORD_SALT_ROUNDS, REGEX_EMAIL, REGEX_PASSWORD, REGEX_PASSWORD_SIMPLE, USER_EXISTS, USER_NOT_EXISTS } from "../constants.js"
 import { INVALID_EMAIL } from "../constants.js"
 import { User } from "../db/models.js";
 import jwt from "jsonwebtoken";

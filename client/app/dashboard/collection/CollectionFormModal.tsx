@@ -21,10 +21,6 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
 
     // * Functions
-    const toggleOpen = (index: number) => {
-        setOpenIndex(openIndex === index ? null : index);
-    };
-
     const handleDeleteQuestion = (idx: number) => {
         setQuestions((prev) => prev.filter((_, i) => i !== idx));
     };
@@ -52,7 +48,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         const res = await createCollection(questions, [], collectionName);
 
         if (res.isErr) {
-            alert("Error creating collection");
+            alert(res.error);
         }
 
         onClose();
@@ -107,33 +103,37 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                         </div>
                     </div>
 
-                    {/* Password */}
+                    {/* Questions */}
                     <div className="field">
                         <label className="label">Questions</label>
-                        <div className="control has-icons-left">
+                        <div className="control">
 
-                            {questions.map((question, idx) => (
-                                <div key={idx} className="is-align-items-center mb-2">
-                                    <QuestionGalleryItem
-                                        idx={idx}
-                                        question={question}
-                                        toggleOpen={toggleOpen}
-                                        openIndex={openIndex}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="button is-danger is-small ml-2"
-                                        onClick={() => handleDeleteQuestion(idx)}
-                                    >
-                                        Delete
-                                    </button>
+                            {questions.map((question, key) => (
+                                <div key={key} className="field is-grouped is-grouped-multiline mb-2">
+                                    <div className="control is-expanded">
+                                        <QuestionGalleryItem
+                                            small={true}
+                                            question={question}
+                                            editable={true}
+                                            onUpdate={() => { openQuestionMenu(false) }}
+                                        />
+                                    </div>
+                                    <div className="control">
+                                        <button
+                                            type="button"
+                                            className="button is-danger is-small"
+                                            onClick={() => handleDeleteQuestion(key)}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
-
                             ))}
 
-                            <button onClick={() => openQuestionMenu(true)} className="button" type="button">+</button>
+                            <button onClick={() => openQuestionMenu(true)} className="button mt-2" type="button">+ Add Question</button>
                         </div>
                     </div>
+
 
                     {/* Button */}
                     <div className="field mt-5">
@@ -174,7 +174,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                     if (question_id) {
                         const newQ = await getQuestionByID(question_id);
                         if (newQ.isErr) {
-                            alert("Error getting question");
+                            alert(newQ.error);
                         } else {
                             setQuestions((prev) => [...prev, newQ.value]);
                         }
@@ -182,7 +182,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                     openQuestionMenu(false);
                 }}
             />
-            <button className="modal-close is-large" aria-label="close"></button>
+            <button onClick={onClose} className="modal-close is-large" aria-label="close"></button>
         </div>
     );
 }

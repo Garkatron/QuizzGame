@@ -97,29 +97,19 @@ export async function updateQuestion(
 
 
 export async function createQuestion(question: string, tags: string[], options: string[], answer: string) {
-    const res = await fetch("/api/question/create", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getCookie("token")}`,
-        },
-        body: JSON.stringify({
+
+    const res = secureFetch("POST", "/api/question/create",
+        {
             user_name: sessionStorage.getItem("username"),
             question_text: question,
             options,
             answer,
             tags
-        }),
-    });
+        }
+    )
 
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const message = errorData.message || `HTTP error: ${res.status}`;
-        return Result.err(`Failed to update question: ${message}`);
-    }
 
-    if (!res.ok) Result.err("Failed to create question");
-    return Result.ok(await res.json());
+    return res;
 }
 
 export async function deleteQuestion(id: string) {
