@@ -16,3 +16,9 @@ export type Collection = {
 export interface Permissions {
     [key: string]: boolean;
 }
+
+export type User = {
+    name: string;
+    permissions: Permissions;
+    score: number;
+}

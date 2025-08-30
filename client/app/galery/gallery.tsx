@@ -1,10 +1,11 @@
 import { hasPermission, useFetch } from "~/utils/utils";
 import { CollectionGalleryItem } from "./CollectionGalleryItem";
-import type { Collection, Question } from "~/utils/owntypes";
+import type { Collection, Question, User } from "~/utils/owntypes";
 import { useEffect, useMemo, useState } from "react";
 import "./custom.css";
 import { QuestionGalleryItem } from "~/dashboard/question/QuestionGalleryItem";
 import { useUser } from "~/utils/UserContext";
+import { UserGalleryItem } from "~/dashboard/UserGalleryItem";
 
 export function Gallery() {
 
@@ -16,6 +17,8 @@ export function Gallery() {
     const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions, refetch: refreshQuestions } =
         useFetch<Question[]>("/api/questions");
 
+    const { data: users, loading: isLoadingUsers, error: errorWithUsers, refetch: refreshUsers } =
+        useFetch<User[]>("/api/users");
 
     const [activeTab, setActiveTab] = useState<"questions" | "collections" | "users">("questions");
 
@@ -42,6 +45,21 @@ export function Gallery() {
         <QuestionGalleryItem key={question._id} question={question} editable={hasPermission("EDIT_QUESTION")} onUpdate={refreshQuestions} />
     ));
 
+    const filteredUsers = useMemo(() => {
+        if (!users) return [];
+        const term = search.trim().toLowerCase();
+        return users.filter(u => u.name.toLowerCase().includes(term));
+    }, [users, search]);
+
+    const usersContent = filteredUsers.map((user, key) => (
+        <UserGalleryItem key={user.name} user={user} editable={hasPermission("EDIT_USER")} onUpdate={refreshUsers} />
+    ));
+
+    const renderContent = () => {
+        if (activeTab === "collections") return collectionsContent;
+        if (activeTab === "questions") return questionsContent;
+        return usersContent;
+    };
 
     if (isLoadingCollections) {
         return (
@@ -60,6 +78,13 @@ export function Gallery() {
     }
 
 
+    if (errorWithUsers) {
+        return (
+            <div className="notification is-danger has-text-centered my-6">
+                Error loading users. Please try again.
+            </div>
+        );
+    }
     return (
 
 
@@ -88,13 +113,7 @@ export function Gallery() {
             </div>
 
             <div className="columns is-multiline is-variable is-3 px-5">
-
-                {
-                    activeTab === "collections" ? (
-                        collectionsContent
-                    ) : (questionsContent)
-                }
-
+                {renderContent()}
             </div>
         </main>
 

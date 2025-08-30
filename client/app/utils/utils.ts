@@ -126,6 +126,10 @@ export async function deleteQuestion(id: string) {
     return await secureFetch("POST", "/api/question/delete", { id });
 }
 
+export async function deleteUser(name: string) {
+    return await secureFetch("POST", "/api/auth/delete", { name });
+}
+
 export async function getQuestionByID(qid: string) {
     return await secureFetch("GET", `/api/questions/id/${qid}`);
 }
