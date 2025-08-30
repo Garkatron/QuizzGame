@@ -5,7 +5,6 @@ import { getCookie } from "~/cookie";
 interface UserContextType {
     username: string | null;
 }
-
 const UserContext = createContext<UserContextType>({ username: null });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -13,6 +12,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         setUsername(getCookie("username"));
+
     }, []);
 
     return <UserContext.Provider value={{ username }}>{children}</UserContext.Provider>;

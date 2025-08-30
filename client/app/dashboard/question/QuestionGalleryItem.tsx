@@ -3,25 +3,35 @@ import React, { useEffect, useState } from "react";
 import type { JSX } from "react";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
-import { updateQuestion } from "~/utils/utils";
+import { deleteQuestion, updateQuestion } from "~/utils/utils";
 
 
-type QuestionDropdownProps = {
-    idx: number;
+type QuestionGalleryItemProps = {
     question: Question;
-    toggleOpen: (index: number) => void;
-    openIndex: number | null;
+    editable: boolean;
+    onUpdate: () => void;
 };
 
-export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: QuestionDropdownProps): JSX.Element {
+export function QuestionGalleryItem({ question, editable = true, onUpdate }: QuestionGalleryItemProps): JSX.Element {
     const [options, setOptions] = useState<string[]>(question.options);
     const [name, setName] = useState<string>(question.question);
+    const [active, setActive] = useState<boolean>(false);
 
     const handleOptionChange = (i: number, value: string) => {
         const newOptions = [...options];
         newOptions[i] = value;
         setOptions(newOptions);
     };
+
+    const handleDelete = async () => {
+        setActive(false);
+        const res = await deleteQuestion(question._id);
+        if (res.isErr) {
+            alert(res.variant);
+        }
+        onUpdate();
+
+    }
 
     const handleSaveAll = async () => {
         try {
@@ -49,7 +59,7 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
 
 
     return (
-        <div className="box mb-4 has-text-left">
+        <div className="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen">
             {/* Header */}
             <div
                 className="is-flex is-justify-content-space-between is-align-items-center p-2"
@@ -57,7 +67,7 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
                     cursor: "pointer",
                     borderBottom: "1px solid #eaeaea",
                 }}
-                onClick={() => toggleOpen(idx)}
+                onClick={() => setActive(!active)}
             >
                 <input
                     className="input is-size-5 has-text-weight-semibold"
@@ -65,19 +75,24 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     style={{ border: "none", boxShadow: "none" }}
+                    readOnly={!editable}
                 />
                 <span className="icon">
-                    <i className={`fas ${openIndex === idx ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
+                    <i className={`fas ${active ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
                 </span>
             </div>
 
             {/* Tags */}
-            <div className="mt-2 mb-3">
-                <span className="tag is-info is-warning">#{question.tags}</span>
+            <div className="tags  mb-3">
+                {
+                    question.tags.map((tag: string) => (
+                        <span className="tag is-info">#{tag}</span>
+                    ))
+                }
             </div>
 
             {/* Opctions */}
-            <div className={`mt-3 transition-all ${openIndex === idx ? "is-block" : "is-hidden"}`}>
+            <div className={`mt-3 transition-all ${active ? "is-block" : "is-hidden"}`}>
                 {options.map((opt, i) => (
                     <div key={i} className="field is-flex is-align-items-center mb-2"
                         style={{ borderBottom: "1px solid #f0f0f0", paddingBottom: "6px" }}
@@ -89,19 +104,35 @@ export function QuestionDropdown({ idx, question, toggleOpen, openIndex }: Quest
                                 type="text"
                                 value={opt}
                                 onChange={(e) => handleOptionChange(i, e.target.value)}
+                                readOnly={!editable}
                             />
                         </div>
                     </div>
                 ))}
 
                 {/** Button */}
-                <button
-                    onClick={handleSaveAll}
-                    className="button is-primary is-fullwidth mt-3"
-                    type="button"
-                >
-                    Save Changes
-                </button>
+                {
+                    editable ? (
+                        <>
+                            <button
+                                onClick={handleSaveAll}
+                                className="button is-primary is-fullwidth mt-3"
+                                type="button"
+                            >
+                                Save Changes
+                            </button>
+                            <button
+                                className="button is-danger is-fullwidth mt-3"
+                                type="button"
+                                onClick={handleDelete}
+                            >
+                                Delete
+                            </button>
+                        </>
+                    ) : (
+                        <></>
+                    )
+                }
             </div>
         </div>
     );

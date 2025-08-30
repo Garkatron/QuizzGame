@@ -1,11 +1,24 @@
-import { useFetch } from "~/utils/utils";
+import { hasPermission, useFetch } from "~/utils/utils";
 import { CollectionGalleryItem } from "./CollectionGalleryItem";
-import type { Collection } from "~/utils/owntypes";
+import type { Collection, Question } from "~/utils/owntypes";
 import { useEffect, useMemo, useState } from "react";
+import "./custom.css";
+import { QuestionGalleryItem } from "~/dashboard/question/QuestionGalleryItem";
+import { useUser } from "~/utils/UserContext";
 
 export function Gallery() {
+
+
     const { data: collections, loading: isLoadingCollections, error: errorWithCollections, refetch: refreshCollections } =
         useFetch<Collection[]>("/api/collections");
+
+
+    const { data: questions, loading: isLoadingQuestions, error: errorWithQuestions, refetch: refreshQuestions } =
+        useFetch<Question[]>("/api/questions");
+
+
+    const [activeTab, setActiveTab] = useState<"questions" | "collections" | "users">("questions");
+
 
     const [search, setSearch] = useState("");
 
@@ -15,9 +28,20 @@ export function Gallery() {
         return collections.filter(c => c.name.toLowerCase().includes(term));
     }, [collections, search]);
 
-    const content = filteredCollections.map((collection, key) => (
-        <CollectionGalleryItem key={key} collection={collection} />
+    const collectionsContent = filteredCollections.map((collection, key) => (
+        <CollectionGalleryItem key={collection._id} collection={collection} editable={hasPermission("EDIT_COLLECTION")} onUpdate={refreshCollections} />
     ));
+
+    const filteredQuestions = useMemo(() => {
+        if (!questions) return [];
+        const term = search.trim().toLowerCase();
+        return questions.filter(q => q.question.toLowerCase().includes(term));
+    }, [questions, search]);
+
+    const questionsContent = filteredQuestions.map((question, key) => (
+        <QuestionGalleryItem key={question._id} question={question} editable={hasPermission("EDIT_QUESTION")} onUpdate={refreshQuestions} />
+    ));
+
 
     if (isLoadingCollections) {
         return (
@@ -53,13 +77,22 @@ export function Gallery() {
                             </span>
                         </p>
                     </div>
+                    <div className="tabs">
+                        <ul>
+                            <li className={activeTab === "collections" ? "is-active" : ""}><a onClick={() => setActiveTab("collections")} >Collections</a></li>
+                            <li className={activeTab === "questions" ? "is-active" : ""}><a onClick={() => setActiveTab("questions")}>Questions</a></li>
+                            <li className={activeTab === "users" ? "is-active" : ""}><a onClick={() => setActiveTab("users")}>Users</a></li>
+                        </ul>
+                    </div>
                 </nav>
             </div>
 
             <div className="columns is-multiline is-variable is-3 px-5">
 
                 {
-                    content
+                    activeTab === "collections" ? (
+                        collectionsContent
+                    ) : (questionsContent)
                 }
 
             </div>

@@ -10,8 +10,8 @@ export function Welcome() {
           <Link to="/quiz/singleplayer" className="button is-danger is-large">
             Singleplayer
           </Link>
-          <Link to="/quiz/dashboard" className="button is-warning is-large">
-            Quiz Dashboard
+          <Link to="/quiz/gallery" className="button is-warning is-large">
+            Gallery
           </Link>
           <Link to="/quiz/multiplayer" className="button is-primary is-large">
             Multiplayer

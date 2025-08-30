@@ -5,7 +5,6 @@ export default [
     route("/login", "routes/login.tsx"),
     route("/register", "routes/register.tsx"),
 
-    route("/quiz/dashboard", "routes/dashboard.tsx"),
     route("/quiz/singleplayer/:id", "routes/quizz.single.tsx"),
     route("/quiz/multiplayer", "routes/quizz.multi.tsx"),
     route("/quiz/gallery", "routes/gallery.tsx"),

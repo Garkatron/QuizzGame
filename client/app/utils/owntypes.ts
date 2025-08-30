@@ -12,3 +12,7 @@ export type Collection = {
     owner: string;
     questions: Question[];
 };
+
+export interface Permissions {
+    [key: string]: boolean;
+}

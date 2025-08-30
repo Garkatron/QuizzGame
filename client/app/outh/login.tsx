@@ -9,7 +9,7 @@ export function Login() {
     const [error, setError] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault(); // evita que se recargue la página
+        e.preventDefault();
 
         try {
             const res = await fetch("/api/auth/login", {
@@ -18,17 +18,16 @@ export function Login() {
                 body: JSON.stringify({ name, password }),
             });
 
-            const data = await res.json();
+            const json = await res.json();
 
-            if (data.success) {
-                // guardar token o username en cookies/localStorage
-                setCookie("token", data.data.accessToken);
-                setCookie("username", data.data.user.name);
+            if (json.success) {
+                setCookie("token", json.data.accessToken);
+                sessionStorage.setItem("username", json.data.user.name);
+                sessionStorage.setItem("permissions", JSON.stringify(json.data.user.permissions));
 
-                // redirigir al dashboard
                 navigate("/");
             } else {
-                setError(data.message || "Login failed");
+                setError(json.message || "Login failed");
             }
         } catch (err) {
             console.error(err);

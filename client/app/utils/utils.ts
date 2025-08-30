@@ -104,7 +104,7 @@ export async function createQuestion(question: string, tags: string[], options: 
             Authorization: `Bearer ${getCookie("token")}`,
         },
         body: JSON.stringify({
-            user_name: getCookie("username"),
+            user_name: sessionStorage.getItem("username"),
             question_text: question,
             options,
             answer,
@@ -121,6 +121,11 @@ export async function createQuestion(question: string, tags: string[], options: 
     if (!res.ok) Result.err("Failed to create question");
     return Result.ok(await res.json());
 }
+
+export async function deleteQuestion(id: string) {
+    return await secureFetch("POST", "/api/question/delete", { id });
+}
+
 export async function getQuestionByID(qid: string) {
     return await secureFetch("GET", `/api/questions/id/${qid}`);
 }
@@ -172,7 +177,7 @@ export async function deleteCollection(owner_id: string, collection_id: string |
 
 export async function createCollection(questions: Question[], tags: string[], name: string) {
     const res = await secureFetch("POST", "/api/collection/create", {
-        user_name: getCookie("username"),
+        user_name: sessionStorage.getItem("username"),
 
         questions,
         tags,
@@ -180,4 +185,15 @@ export async function createCollection(questions: Question[], tags: string[], na
     });
 
     return res;
+}
+
+
+export function hasPermission(name: string): boolean {
+    const p = sessionStorage.getItem("permissions");
+    if (typeof p !== "string") return false;
+    const permissions = JSON.parse(p);
+    if (name in permissions) {
+        return permissions[name];
+    }
+    return false;
 }

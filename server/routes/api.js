@@ -55,7 +55,7 @@ function MakeOuthPoints(app) {
             const accessToken = generate_access_token(name, user.permissions);
 
             return send_response_successful(res, "Login successful", {
-                user: { id: user._id, name: user.name, email: user.email },
+                user: { id: user._id, name: user.name, email: user.email, permissions: user.permissions },
                 accessToken
             });
 

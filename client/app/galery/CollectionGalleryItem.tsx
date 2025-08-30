@@ -5,9 +5,9 @@ import type { Collection } from "~/utils/owntypes";
 import { useFetch } from "~/utils/utils";
 
 export type CollectionGalleryProps = {
-    collection: Collection, editable: boolean
+    collection: Collection, editable: boolean, onUpdate: () => void
 };
-export function CollectionGalleryItem({ collection, editable = false }: CollectionGalleryProps) {
+export function CollectionGalleryItem({ collection, editable = false, onUpdate }: CollectionGalleryProps) {
 
     const [isActive, setActive] = useState(false);
 
@@ -43,7 +43,7 @@ export function CollectionGalleryItem({ collection, editable = false }: Collecti
                     }
                 </div>
             </div>
-            <CollectionFormModal active={isActive} id={collection._id} onClose={() => { setActive(false); }} />
+            <CollectionFormModal active={isActive} id={collection._id} onClose={() => { setActive(false); onUpdate(); }} />
 
         </div>
     );

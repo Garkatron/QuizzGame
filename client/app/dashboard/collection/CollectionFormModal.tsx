@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { QuestionFormModal } from "../question/QuestionFormModal";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
-import { QuestionDropdown } from "../question/QuestionDropdown";
+import { QuestionGalleryItem } from "../question/QuestionGalleryItem";
 import { addCollectionByID, getQuestionByID, deleteCollection, updateCollection, createCollection } from "~/utils/utils";
 
 type CollectionFormModalProps = {
@@ -114,7 +114,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
 
                             {questions.map((question, idx) => (
                                 <div key={idx} className="is-align-items-center mb-2">
-                                    <QuestionDropdown
+                                    <QuestionGalleryItem
                                         idx={idx}
                                         question={question}
                                         toggleOpen={toggleOpen}
