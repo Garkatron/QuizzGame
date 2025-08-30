@@ -135,7 +135,7 @@ function MakeOuthPoints(app) {
     app.get("/api/users", middleware_authenticate_token, async (req, res) => {
         try {
 
-            const users = await User.find();
+            const users = await User.find().select("name username permissions");
 
             return send_response_successful(res, "Login successful", users);
 
