@@ -3,10 +3,10 @@ import { compare_password, hash_password, send_response_not_found, send_response
 import { COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_OWNERSHIP_OR_ADMIN, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
 import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
-function require_ownership_or_admin(user, resourceOwnerId) {
-    if (user._id.equals(resourceOwnerId)) return true;
-    if (user.permissions.ADMIN) return true;
-    return false;
+function has_ownership_or_admin(user, resourceOwnerId) {
+    if (!(user.permissions.get("ADMIN") || user._id.equals(resourceOwnerId))) {
+        throw Error(NEED_OWNERSHIP_OR_ADMIN);
+    }
 }
 
 function MakeOuthPoints(app) {
@@ -75,25 +75,13 @@ function MakeOuthPoints(app) {
                 return send_response_not_found(res, [NOT_FOUND_USER])
             }
 
-            // has_valid_password(password);
+            const user = await user_exists({ name: req.user.name });
+            const userToDelete = await user_exists({ name: req.user.name });
 
-            const user = await user_exists({ name });
+            has_ownership_or_admin(user, userToDelete);
 
-            // const user = await User.findOne({ name });
-            /* if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User don't found",
-                    errors: ["Not exists an user with this name"]
-                });
-            }*/
+            await userToDelete.deleteOne();
 
-            // const isMatch = await compare_password(password, user.password);
-            // if (!isMatch) {
-            //    return send_response_unsuccessful(res, "Bad password", [INVALID_PASSWORD]);
-            // }
-
-            const deleted = await User.deleteOne({ name: user.name })
             return send_response_successful(res, deleted);
 
         } catch (error) {
@@ -269,6 +257,7 @@ export default function MakeEndpoints(app) {
         try {
             const { collection_id, owner_id, name, tags, questions } = req.body;
 
+
             if (!collection_id || !owner_id) {
                 return send_response_unsuccessful(res, ["Missing parameters"]);
             }
@@ -278,14 +267,13 @@ export default function MakeEndpoints(app) {
                 return send_response_unsuccessful(res, [COLLECTION_NOT_FOUND]);
             }
 
-            const user = await user_exists({ id: owner_id });
+            const user = await user_exists({ name: req.user.name });
 
             //const user = await User.findOne({ _id: owner_id });
             //if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
 
-            if (!require_ownership_or_admin(user, collection.owner)) {
-                return send_response_unsuccessful(res, [NEED_OWNERSHIP_OR_ADMIN]);
-            }
+
+            has_ownership_or_admin(user, collection.owner);
 
             if (name !== undefined) collection.name = name;
             if (tags !== undefined) collection.tags = tags;
@@ -307,7 +295,7 @@ export default function MakeEndpoints(app) {
         try {
             const { owner_id, collection_id } = req.body;
 
-            const user = await user_exists({ id: owner_id });
+            const user = await user_exists({ name: req.user.name });
 
             const collection = await QuizzCollection.findOne({ _id: collection_id, owner: owner_id });
 
@@ -315,10 +303,8 @@ export default function MakeEndpoints(app) {
                 return send_response_unsuccessful(res, [COLLECTION_NOT_FOUND]);
             }
 
-            if (!require_ownership_or_admin(user, collection.owner)) {
-                return send_response_unsuccessful(res, [NEED_OWNERSHIP_OR_ADMIN]);
-            }
 
+            has_ownership_or_admin(user, collection.owner);
 
             await collection.deleteOne();
 

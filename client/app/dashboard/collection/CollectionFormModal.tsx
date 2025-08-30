@@ -73,7 +73,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
     const handleDeleteCollection = async () => {
         const res = await deleteCollection(ownerId, id);
         if (res.isErr) {
-            alert("Error deleting collection");
+            alert("Error deleting collection: " + res.error);
         }
         onClose();
     };

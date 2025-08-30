@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getCookie } from "~/cookie";
-import type { Collection, Question } from "./owntypes";
+import type { Collection, Permissions, Question } from "./owntypes";
 import { Result } from "true-myth";
 
 
@@ -192,12 +192,21 @@ export async function createCollection(questions: Question[], tags: string[], na
 }
 
 
-export function hasPermission(name: string): boolean {
-    const p = sessionStorage.getItem("permissions");
-    if (typeof p !== "string") return false;
-    const permissions = JSON.parse(p);
-    if (name in permissions) {
-        return permissions[name];
+export function usePermissions(): (permission: string) => boolean {
+    const [permissions, setPermissions] = useState<Permissions>({});
+    useEffect(() => {
+        const p = sessionStorage.getItem("permissions");
+        try {
+            setPermissions(JSON.parse(p) as Permissions);
+        } catch (error) {
+            console.error("Invalid permissions JSON:", error);
+        }
+    }, []);
+
+    return (permission: string) => {
+        if (permissions && permission in permissions) {
+            return permissions[permission];
+        }
+        return false;
     }
-    return false;
 }

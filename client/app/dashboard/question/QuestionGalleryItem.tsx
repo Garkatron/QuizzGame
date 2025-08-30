@@ -85,8 +85,8 @@ export function QuestionGalleryItem({ question, editable = true, onUpdate }: Que
             {/* Tags */}
             <div className="tags  mb-3">
                 {
-                    question.tags.map((tag: string) => (
-                        <span className="tag is-info">#{tag}</span>
+                    question.tags.map((tag: string, key: number) => (
+                        <span key={key} className="tag is-info">#{tag}</span>
                     ))
                 }
             </div>

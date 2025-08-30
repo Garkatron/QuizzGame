@@ -1,4 +1,4 @@
-import { hasPermission, useFetch } from "~/utils/utils";
+import { useFetch, usePermissions } from "~/utils/utils";
 import { CollectionGalleryItem } from "./CollectionGalleryItem";
 import type { Collection, Question, User } from "~/utils/owntypes";
 import { useEffect, useMemo, useState } from "react";
@@ -20,6 +20,8 @@ export function Gallery() {
 
     const [activeTab, setActiveTab] = useState<"questions" | "collections" | "users">("questions");
 
+
+    const hasPermission = usePermissions();
 
     const [search, setSearch] = useState("");
 
