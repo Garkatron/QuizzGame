@@ -4,7 +4,7 @@ export const SERVER_PORT = 3000;
 // ? Security
 export const PASSWORD_SALT_ROUNDS = 10;
 export const REGEX_PASSWORD = /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-export const REGEX_PASSWORD_SIMPLE = /^.{8,}$/;
+export const REGEX_PASSWORD_SIMPLE = /^.{8,}$/; // ! Testing, not production.
 export const REGEX_EMAIL = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 export const MIN_OPTIONS = 2;
 
@@ -29,7 +29,7 @@ export const NEED_OWNERSHIP_OR_ADMIN = "You msut be owner or admin to edit this"
 
 // ? Admin Permissions
 export const UserPermissions = {
-    ADMIN: "ADMIN", // Allows user the next permissions with thits that they dony possey
+    ADMIN: "ADMIN", // Allows the user to access admin content and manipulate resources they don't own.
 
     EDIT_QUESTION: "EDIT_QUESTION",
     DELETE_QUESTION: "DELETE_QUESTION",

@@ -4,7 +4,9 @@ import { INVALID_EMAIL } from "../constants.js"
 import { User } from "../db/models.js";
 import jwt from "jsonwebtoken";
 
-// * PASSWORD
+
+// ? Custom Errors
+// * Should I delete it?
 
 class PasswordHashError extends Error {
     constructor() {
@@ -48,27 +50,6 @@ export async function compare_password(password, hash) {
     }
 }
 
-// * DB
-/*
-export async function user_not_exists({ name, id, email }) {
-    let query = null;
-
-    if (id) {
-        query = { _id: id };
-    } else if (email) {
-        query = { email };
-    } else if (name) {
-        query = { name };
-    } else {
-        throw new Error("Should provide name, id or email.");
-    }
-
-    const user = await User.findOne(query);
-    if (user) throw new Error(USER_EXISTS);
-
-    return null;
-}*/
-
 
 export async function user_exists({ name, id, email }) {
     let query = null;
@@ -106,7 +87,6 @@ export async function is_email_used(email) {
 
 // * STRING
 
-
 export function is_valid_string(str) {
     return typeof str === "string" && str.trim().length > 0;
 }
@@ -136,6 +116,12 @@ export function has_valid_email(email) {
     if (!is_valid_string(email) || !REGEX_EMAIL.test(email)) throw new Error(INVALID_EMAIL);
 }
 
+export function has_ownership_or_admin(user, resourceOwnerId) {
+    if (!(user.permissions.get("ADMIN") || user._id.equals(resourceOwnerId))) {
+        throw Error(NEED_OWNERSHIP_OR_ADMIN);
+    }
+}
+
 // * RESPONSES
 
 function send_response(res, statusCode, success, message = "", data = null) {
@@ -148,7 +134,6 @@ function send_response(res, statusCode, success, message = "", data = null) {
     return res.status(statusCode).json(response);
 }
 
-// Helpers específicos
 export function send_response_successful(res, message, data) {
     return send_response(res, 200, true, message, data);
 }
@@ -165,7 +150,7 @@ export function send_response_not_found(res, errors = []) {
     return send_response(res, 404, false, errors.join(", "));
 }
 
-// Tokens
+// * Tokens
 
 export function generate_access_token(user_name, user_permissions) {
     if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET not definied");

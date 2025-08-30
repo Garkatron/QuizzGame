@@ -1,15 +1,25 @@
 import { Question, QuizzCollection, User } from "../db/models.js"
-import { compare_password, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, does_user_exist, is_valid_string, generate_access_token } from "../utils/utils.js"
+import { compare_password, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, does_user_exist, is_valid_string, generate_access_token, has_ownership_or_admin } from "../utils/utils.js"
 import { COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_OWNERSHIP_OR_ADMIN, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
 import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
-function has_ownership_or_admin(user, resourceOwnerId) {
-    if (!(user.permissions.get("ADMIN") || user._id.equals(resourceOwnerId))) {
-        throw Error(NEED_OWNERSHIP_OR_ADMIN);
-    }
-}
+// * ------------------------------------------------------------------------------------------
+// ? API DOCUMENTATION
+// ? USEFUL INFO:
+// * Every endpoint should throw an error if any of the parameters are invalid, fail the checks, or something goes wrong.
+// * The error message is sent as an unsuccessful response by a helper function.
+// * Every endpoint checks the session token and whether the requesting user has the correct permissions.
+// ? SECURITY:
+// * See ./middleware.js
+// * ------------------------------------------------------------------------------------------
 
+
+/**
+ * Create the authentication endpoints.
+ * @param {*} app - Express app instance
+ */
 function MakeOuthPoints(app) {
+    // ? Receive { name, email, password } and create a new user in the database.
     app.post("/api/auth/register", async (req, res) => {
         try {
             const { name, email, password } = req.body;
@@ -41,6 +51,7 @@ function MakeOuthPoints(app) {
         }
     });
 
+    // ? Receive { name, password }, validate credentials, and return a JWT access token.
     app.post("/api/auth/login", async (req, res) => {
         try {
             const { name, password } = req.body;
@@ -64,7 +75,7 @@ function MakeOuthPoints(app) {
         }
     });
 
-
+    // ? Receive { name }, delete a user from the database if authorized.
     app.post("/api/auth/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), async (req, res) => {
         try {
             const { name } = req.body;
@@ -89,7 +100,8 @@ function MakeOuthPoints(app) {
         }
     });
 
-
+    // ? Receive { name, field, value }, update the specified field of a user if authorized.
+    // TODO Change to receive a complete user body (without _id)
     app.post("/api/auth/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), async (req, res) => {
         try {
             const { name, field, value } = req.body;
@@ -99,7 +111,10 @@ function MakeOuthPoints(app) {
                 return send_response_unsuccessful(res, ["Field not editable"]);
             }
 
-            const user = await user_exists({ name });
+            const userToUpdate = await user_exists({ name });
+            const user = await user_exists({ name: req.user.name });
+
+            has_ownership_or_admin(user, userToUpdate._id);
 
             // const user = await User.findOne({ name });
             // if (!user) return send_response_unsuccessful(res, "This User doesn't exist", [USER_NOT_EXISTS]);
@@ -107,9 +122,9 @@ function MakeOuthPoints(app) {
             if (field === "email") has_valid_email(value);
             if (field === "password") {
                 const hashed = await hash_password(value);
-                await user.updateOne({ password: hashed });
+                await userToUpdate.updateOne({ password: hashed });
             } else {
-                await user.updateOne({ [field]: value });
+                await userToUpdate.updateOne({ [field]: value });
             }
 
             const updatedUser = await User.findOne({ name });
@@ -120,6 +135,7 @@ function MakeOuthPoints(app) {
         }
     });
 
+    // ? Retrieve an array of all users in the database.
     app.get("/api/users", async (req, res) => {
         try {
 
@@ -133,19 +149,29 @@ function MakeOuthPoints(app) {
     });
 }
 
+/**
+ * Create the rest of the endpoints (questions and collections).
+ * @param {*} app 
+ */
 export default function MakeEndpoints(app) {
 
+    // ? Root endpoint, returns a welcome message.
     app.post('/', (req, res) => {
-        res.send('<h1>Hello, Express.js Server!</h1>');
+        res.send('<h1>Hello from Deus Quizzes server!</h1>');
     });
 
     MakeOuthPoints(app);
 
+    // ? Receive { id }, delete a question from the database if authorized.
     app.post("/api/question/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), async (req, res) => {
         try {
             const { id } = req.body;
 
             const question = await Question.findOne({ _id: id });
+
+            const user = await user_exists({ name: req.user.name });
+            has_ownership_or_admin(user, userToUpdate._id);
+
             if (question) {
                 const deleted = await Question.deleteOne({ _id: id });
                 return send_response_successful(res, "Question deleted successfully", deleted);
@@ -157,6 +183,8 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Receive { id, field, value }, update the specified field of a question if authorized.
+    // TODO: Change to receive a complete question body
     app.post("/api/question/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]), async (req, res) => {
         try {
             const { id, field, value } = req.body;
@@ -167,6 +195,10 @@ export default function MakeEndpoints(app) {
             }
 
             const question = await Question.findOne({ _id: id });
+
+            const user = await user_exists({ name: req.user.name });
+            has_ownership_or_admin(user, userToUpdate._id);
+
             if (question) {
                 await question.updateOne({ [field]: value });
                 return send_response_successful(res, "Question edited successfully", question);
@@ -178,8 +210,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-
-
+    // ? Receive { user_name, question_text, options, answer, tags }, create a new question.
     app.post("/api/question/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_QUESTION]), async (req, res) => {
         try {
             const { user_name, question_text, options, answer, tags } = req.body;
@@ -199,9 +230,6 @@ export default function MakeEndpoints(app) {
 
             const user = await user_exists({ name: user_name });
 
-            // const user = await User.findOne({ name: user_name });
-            // if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
             const existing = await Question.findOne({ question: question_text, owner: user._id });
 
             if (existing) {
@@ -218,7 +246,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-
+    // ? Receive { user_name, name, tags, questions }, create a new quiz collection.
     app.post("/api/collection/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]), async (req, res) => {
         try {
             const { user_name, name, tags, questions } = req.body;
@@ -241,9 +269,6 @@ export default function MakeEndpoints(app) {
 
             const user = await user_exists({ name: user_name });
 
-            // const user = await User.findOne({ name: user_name });
-            // if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
             const newCollection = new QuizzCollection({ name, tags, questions, owner: user._id });
             newCollection.save();
 
@@ -253,6 +278,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Receive { collection_id, owner_id, name, tags, questions }, update a collection if authorized.
     app.post("/api/collection/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), async (req, res) => {
         try {
             const { collection_id, owner_id, name, tags, questions } = req.body;
@@ -268,11 +294,6 @@ export default function MakeEndpoints(app) {
             }
 
             const user = await user_exists({ name: req.user.name });
-
-            //const user = await User.findOne({ _id: owner_id });
-            //if (!user) return send_response_unsuccessful(res, "User not found", [USER_NOT_EXISTS]);
-
-
             has_ownership_or_admin(user, collection.owner);
 
             if (name !== undefined) collection.name = name;
@@ -288,9 +309,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-
-
-
+    // ? Receive { owner_id, collection_id }, delete a collection if authorized.
     app.post("/api/collection/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), async (req, res) => {
         try {
             const { owner_id, collection_id } = req.body;
@@ -315,7 +334,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
-
+    // ? Receive { id }, get a collection by its ID, including its questions.
     app.get("/api/collections/id/:id", async (req, res) => {
         try {
             const { id } = req.params;
@@ -328,6 +347,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Receive { ownername }, get all collections of a specific user, including questions.
     app.get("/api/collections/owner/:ownername", async (req, res) => {
         try {
 
@@ -343,6 +363,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Get all quiz collections in the database.
     app.get("/api/collections", async (req, res) => {
         try {
             const quizzCollections = await QuizzCollection.find();
@@ -352,6 +373,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Receive { ownername }, get all questions created by a specific user.
     app.get("/api/questions/owner/:ownername", async (req, res) => {
         try {
             const { ownername } = req.params;
@@ -365,6 +387,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Receive { id }, get a question by its ID.
     app.get("/api/questions/id/:id", async (req, res) => {
         try {
             const { id } = req.params;
@@ -375,6 +398,7 @@ export default function MakeEndpoints(app) {
         }
     });
 
+    // ? Get all questions in the database.
     app.get("/api/questions", async (req, res) => {
         try {
             const questions = await Question.find();
