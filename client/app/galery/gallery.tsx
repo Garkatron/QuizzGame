@@ -8,8 +8,6 @@ import { useUser } from "~/utils/UserContext";
 import { UserGalleryItem } from "~/dashboard/UserGalleryItem";
 
 export function Gallery() {
-
-
     const { data: collections, loading: isLoadingCollections, error: errorWithCollections, refetch: refreshCollections } =
         useFetch<Collection[]>("/api/collections");
 
@@ -24,6 +22,15 @@ export function Gallery() {
 
 
     const [search, setSearch] = useState("");
+
+    let name = "Quiz Finder";
+    if (activeTab === "collections") {
+        name = "Quiz Finder";
+    } else if (activeTab === "questions") {
+        name = "Question Finder";
+    } else {
+        name = "User Finder";
+    }
 
     const filteredCollections = useMemo(() => {
         if (!collections) return [];
@@ -90,7 +97,11 @@ export function Gallery() {
 
         <main>
             <div className="hero is-primary has-text-centered p-6">
-                <h1 className="title is-2 mb-4">Quiz Finder</h1>
+                <h1 className="title is-2 mb-4">
+                    {
+                        name
+                    }
+                </h1>
                 <h2 className="subtitle is-4 mb-5">Search quizzes and questions</h2>
 
                 <nav className="panel">
@@ -106,7 +117,9 @@ export function Gallery() {
                         <ul>
                             <li className={activeTab === "collections" ? "is-active" : ""}><a onClick={() => setActiveTab("collections")} >Collections</a></li>
                             <li className={activeTab === "questions" ? "is-active" : ""}><a onClick={() => setActiveTab("questions")}>Questions</a></li>
-                            <li className={activeTab === "users" ? "is-active" : ""}><a onClick={() => setActiveTab("users")}>Users</a></li>
+                            {
+                                hasPermission("ADMIN") && (<li className={activeTab === "users" ? "is-active" : ""}><a onClick={() => setActiveTab("users")}>Users</a></li>)
+                            }
                         </ul>
                     </div>
                 </nav>
