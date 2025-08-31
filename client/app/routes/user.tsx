@@ -1,3 +1,4 @@
+import { User } from "~/user/user";
 import type { Route } from "./+types/home";
 import { Gallery } from "~/galery/gallery";
 
@@ -9,5 +10,5 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Home() {
-    return <Gallery />;
+    return <User />;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getCookie } from "~/cookie";
-import type { Collection, Permissions, Question } from "./owntypes";
+import type { Collection, Permissions, Question, User } from "./owntypes";
 import { Result } from "true-myth";
 
 
@@ -181,22 +181,33 @@ export async function createCollection(questions: Question[], tags: string[], na
     return res;
 }
 
-
-export function usePermissions(): (permission: string) => boolean {
-    const [permissions, setPermissions] = useState<Permissions>({});
-    useEffect(() => {
-        const p = sessionStorage.getItem("permissions");
-        try {
-            setPermissions(JSON.parse(p) as Permissions);
-        } catch (error) {
-            console.error("Invalid permissions JSON:", error);
-        }
-    }, []);
-
-    return (permission: string) => {
-        if (permissions && permission in permissions) {
-            return permissions[permission];
-        }
-        return false;
+export async function updateUser(user: User, newName: string | null, newEmail: string | null, newPassword: string | null) {
+    const ub: any = {};
+    if (newName) {
+        ub.newName = newName;
     }
+    if (newEmail) {
+        ub.newEmail = newEmail;
+    }
+
+    if (newPassword) {
+        ub.newPassword = newPassword;
+    }
+
+    ub.previousName = user.name;
+
+    const res = secureFetch("POST", "/api/auth/edit",
+        ub
+    );
+    return res;
 }
+
+
+
+
+export function scrollToElement(selector: string) {
+    const element = document.querySelector(selector);
+    if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+};

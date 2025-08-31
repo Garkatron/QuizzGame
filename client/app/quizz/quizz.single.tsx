@@ -77,7 +77,7 @@ export function SingleplayerQuizz({ id }: { id: string }) {
             <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
                 <h2 className="title">Congratulations, You've finished!</h2>
                 <h3 className="subtitle"> Correct answers: {score} of {collectionData.questions.length} Questions</h3>
-                <Link to="/quiz/gallery" className="button is-large">
+                <Link to="/" className="button is-large">
                     Exit to Gallery
                 </Link>
 
@@ -86,7 +86,14 @@ export function SingleplayerQuizz({ id }: { id: string }) {
     }
 
     return (
-        <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
+        <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center" style={{
+            backgroundImage: "url('/bg4.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            width: "100%",
+            height: "100%",
+        }}>
             {
                 id && (<h1 className="subtitle">{collectionData?.name}</h1>)
             }
@@ -109,14 +116,14 @@ export function SingleplayerQuizz({ id }: { id: string }) {
                     <>
                         <h2 className="title is-2">No questions available</h2>
 
-                        <Link to="/quiz/gallery" className="button is-warning is-large">
+                        <Link to="/" className="button is-warning is-large">
                             Find more
                         </Link>
                     </>
                 )}
 
             </div>
-            <Link to="/quiz/gallery" className="button is-large">
+            <Link to="/" className="button is-large">
                 Exit to Gallery
             </Link>
 

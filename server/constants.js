@@ -27,6 +27,7 @@ export const INVALID_QUESTIONS_ARRAY = "Invalid questions array";
 export const COLLECTION_ALREADY_EXISTS = "Collection already exists.";
 export const NEED_OWNERSHIP_OR_ADMIN = "You msut be owner or admin to edit this";
 export const NEED_ANSWER = "Your question need an answer.";
+export const MISSING_PARAMETERS = "Missing parameters.";
 
 // ? Admin Permissions
 export const UserPermissions = {

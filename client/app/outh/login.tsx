@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { setCookie } from "~/cookie"; // si quieres guardar token
+import { useUser } from "~/utils/UserContext";
 
 export function Login() {
     const navigate = useNavigate();
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const { login } = useUser();
+    const location = useLocation();
+    const from = location.state?.from || "/";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,10 +26,10 @@ export function Login() {
 
             if (json.success) {
                 setCookie("token", json.data.accessToken);
-                sessionStorage.setItem("username", json.data.user.name);
-                sessionStorage.setItem("permissions", JSON.stringify(json.data.user.permissions));
+                login(json.data.user);
 
-                navigate("/");
+                navigate(from, { replace: true });
+
             } else {
                 setError(json.message || "Login failed");
             }

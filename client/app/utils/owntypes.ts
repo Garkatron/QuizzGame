@@ -3,6 +3,7 @@ export type Question = {
     question: string;
     options: string[];
     tags: string;
+    owner: string;
 };
 
 export type Collection = {
@@ -18,7 +19,9 @@ export interface Permissions {
 }
 
 export type User = {
+    _id: string;
     name: string;
     permissions: Permissions;
     score: number;
+    email: string;
 }

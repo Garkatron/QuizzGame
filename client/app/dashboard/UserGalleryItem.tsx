@@ -16,7 +16,7 @@ export function UserGalleryItem({ user, editable = false, onUpdate }: UserGaller
         const res = await deleteUser(user.name);
         onUpdate();
         if (res.isErr) {
-            alert("USERNAME: " + user.name);
+            alert(res.error);
         }
     }
 

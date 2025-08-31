@@ -1,6 +1,10 @@
-import { Link } from "react-router";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router";
+import { useUser } from "~/utils/UserContext";
 
 export function MultiplayerQuizz() {
+
+
     return (
         <main className="hero is-fullheight is-flex is-justify-content-center is-align-items-center">
             <div className="box has-text-centered" style={{ maxWidth: "600px", width: "100%" }}>

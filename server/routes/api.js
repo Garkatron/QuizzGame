@@ -1,6 +1,6 @@
 import { Question, QuizzCollection, User } from "../db/models.js"
 import { compare_password, hash_password, send_response_not_found, send_response_successful, send_response_unsuccessful, has_valid_password, has_valid_email, has_valid_name, email_not_used, user_exists, does_user_exist, is_valid_string, generate_access_token, has_ownership_or_admin } from "../utils/utils.js"
-import { COLLECTION_ALREADY_EXISTS, COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, NEED_ANSWER, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
+import { COLLECTION_ALREADY_EXISTS, COLLECTION_NOT_FOUND, INVALID_OPTIONS_ARRAY, INVALID_PASSWORD, INVALID_QUESTIONS_ARRAY, INVALID_STRING, INVALID_TAGS_ARRAY, MIN_OPTIONS, MISSING_PARAMETERS, NEED_ANSWER, NOT_FOUND_USER, OPTIONS_MUST_INCLUDE_ANSWER, QUESTION_ALREADY_EXISTS, QUESTION_NOT_FOUND, USER_EXISTS, UserPermissions } from "../constants.js"
 import { authorize_permissions, middleware_authenticate_token } from "./middleware.js";
 
 // * ------------------------------------------------------------------------------------------
@@ -46,9 +46,9 @@ function MakeOuthPoints(app) {
                     [UserPermissions.CREATE_COLLECTION]: true,
                     [UserPermissions.EDIT_COLLECTION]: true,
                     [UserPermissions.DELETE_COLLECTION]: true,
-                    [UserPermissions.EDIT_USER]: false,
-                    [UserPermissions.DELETE_USER]: false,
-                    [UserPermissions.CREATE_USER]: false,
+                    [UserPermissions.EDIT_USER]: true,
+                    [UserPermissions.DELETE_USER]: true,
+                    [UserPermissions.CREATE_USER]: true,
                 },
                 score: 0
             });
@@ -77,7 +77,7 @@ function MakeOuthPoints(app) {
             const accessToken = generate_access_token(name, user.permissions);
 
             return send_response_successful(res, "Login successful", {
-                user: { id: user._id, name: user.name, email: user.email, permissions: user.permissions },
+                user: { _id: user._id, name: user.name, email: user.email, permissions: user.permissions },
                 accessToken
             });
 
@@ -98,11 +98,11 @@ function MakeOuthPoints(app) {
             }
 
             const user = await user_exists({ name: req.user.name });
-            const userToDelete = await user_exists({ name: req.user.name });
+            const userToDelete = await user_exists({ name });
 
-            has_ownership_or_admin(user, userToDelete);
+            has_ownership_or_admin(user, userToDelete._id);
 
-            await userToDelete.deleteOne();
+            const deleted = await userToDelete.deleteOne();
 
             return send_response_successful(res, deleted);
 
@@ -111,35 +111,38 @@ function MakeOuthPoints(app) {
         }
     });
 
-    // ? Receive { name, field, value }, update the specified field of a user if authorized.
-    // TODO Change to receive a complete user body (without _id)
+    // ? Receive {  previousName, newName, newEmail, newPassword }, update the specified field of a user if authorized.
     app.post("/api/auth/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), async (req, res) => {
         try {
-            const { name, field, value } = req.body;
+            const { previousName, newName, newEmail, newPassword } = req.body;
 
-            const allowedFields = ["email", "password", "permissions"];
-            if (!allowedFields.includes(field)) {
-                return send_response_unsuccessful(res, ["Field not editable"]);
+            const userToUpdate = await user_exists({ name: previousName });
+            const editor = await user_exists({ name: req.user.name });
+
+            has_ownership_or_admin(editor, userToUpdate._id);
+
+            const updates = {};
+
+            if (newName?.trim() && is_valid_string(newName)) {
+                updates.name = newName.trim();
             }
 
-            const userToUpdate = await user_exists({ name });
-            const user = await user_exists({ name: req.user.name });
-
-            has_ownership_or_admin(user, userToUpdate._id);
-
-            // const user = await User.findOne({ name });
-            // if (!user) return send_response_unsuccessful(res, "This User doesn't exist", [USER_NOT_EXISTS]);
-
-            if (field === "email") has_valid_email(value);
-            if (field === "password") {
-                const hashed = await hash_password(value);
-                await userToUpdate.updateOne({ password: hashed });
-            } else {
-                await userToUpdate.updateOne({ [field]: value });
+            if (newEmail?.trim()) {
+                has_valid_email(newEmail);
+                updates.email = newEmail.trim();
             }
 
-            const updatedUser = await User.findOne({ name });
-            return send_response_successful(res, "User edited successfully", updatedUser);
+            if (newPassword?.trim()) {
+                has_valid_password(newPassword);
+                const hashed = await hash_password(newPassword);
+                updates.password = hashed;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await userToUpdate.updateOne(updates);
+            }
+
+            return send_response_successful(res, "User edited successfully", userToUpdate);
 
         } catch (error) {
             return send_response_unsuccessful(res, [error.message]);
@@ -301,7 +304,7 @@ export default function MakeEndpoints(app) {
             const user = await user_exists({ name: req.user.name });
 
             if (!collection_id) {
-                return send_response_unsuccessful(res, ["Missing parameters"]);
+                return send_response_unsuccessful(res, [MISSING_PARAMETERS]);
             }
 
             const collection = await QuizzCollection.findOne({ _id: collection_id, owner: user._id });

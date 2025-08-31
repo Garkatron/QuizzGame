@@ -34,6 +34,9 @@ export function CollectionGalleryItem({ collection, editable = false, onUpdate }
                     <Link to={`/quiz/singleplayer/${collection._id}`} className="button is-primary is-large is-fullwidth">
                         Play
                     </Link>
+                    <Link to={`/quiz/multiplayer/${collection._id}`} className="button is-is-medium is-fullwidth">
+                        Party
+                    </Link>
                     {
                         editable && (
                             <button className="button" onClick={() => setActive(true)}>
