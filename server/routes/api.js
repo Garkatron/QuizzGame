@@ -55,7 +55,7 @@ function MakeOuthPoints(app) {
 
             await newUser.save();
 
-            return send_response_successful(res, "User created succefully", { id: newUser._id, name: newUser.name, email: newUser.email })
+            return send_response_successful(res, "User created succefully", { _id: newUser._id, name: newUser.name, email: newUser.email })
 
         } catch (error) {
             return send_response_unsuccessful(res, [error.message]);
@@ -92,10 +92,6 @@ function MakeOuthPoints(app) {
             const { name } = req.body;
 
             has_valid_name(name);
-
-            if (!does_user_exist(name)) {
-                return send_response_not_found(res, [NOT_FOUND_USER])
-            }
 
             const user = await user_exists({ name: req.user.name });
             const userToDelete = await user_exists({ name });

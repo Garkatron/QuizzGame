@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useUser } from "~/utils/UserContext";
 import { deleteUser, updateUser } from "~/utils/utils";
 
 export function User() {
     const { user, logout } = useUser();
+
+    const [name, setName] = useState(user?.name ?? "");
+    const [email, setEmail] = useState(user?.email ?? "");
+    const [password, setPassword] = useState("");
+
 
     if (!user) {
         return (
@@ -13,10 +18,6 @@ export function User() {
             </section>
         );
     }
-
-    const [name, setName] = useState(user.name);
-    const [email, setEmail] = useState(user.email || "");
-    const [password, setPassword] = useState("");
 
     const activePermissions = Object.entries(user.permissions)
         .filter(([_, value]) => value)
@@ -110,13 +111,39 @@ export function User() {
                 </div>
 
                 <div className="buttons mt-4 is-flex is-flex-direction-column">
-                    <button type="button" className="button is-primary mb-2 is-fullwidth" onClick={handleSave}>
-                        Save
-                    </button>
-                    <button type="button" className="button is-danger is-fullwidth" onClick={handleDelete}>
-                        Delete
+                    {(user.name !== name || user.email !== email || password.trim() !== "") && (
+                        <button
+                            type="button"
+                            className="button is-primary mb-2 is-fullwidth"
+                            onClick={handleSave}
+                        >
+                            Save Changes
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        className="button is-warning is-fullwidth"
+                        onClick={() => { logout(); }}
+                    >
+                        Logout
                     </button>
                 </div>
+
+                <div className="mt-5">
+                    <hr />
+                    <p className="has-text-danger has-text-weight-bold mb-3">
+                        Danger Zone
+                    </p>
+                    <button
+                        type="button"
+                        className="button is-danger is-fullwidth"
+                        onClick={handleDelete}
+                    >
+                        Delete Account
+                    </button>
+                </div>
+
             </div>
 
             <Link to="/" className="button is-large mt-5">

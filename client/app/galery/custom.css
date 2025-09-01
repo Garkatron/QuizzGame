@@ -1,7 +1,13 @@
-.tabs li.is-active a {
-    color: white;
-    border-bottom-color: white;
+.panel-tabs a.is-active {
+    color: #fff !important;
+    border-bottom: #fff solid 2px;
 }
+
+.panel-tabs a {
+    color: #000 !important;
+    border-bottom: #000 solid 2px;
+}
+
 
 /* custom.css */
 .paralax {

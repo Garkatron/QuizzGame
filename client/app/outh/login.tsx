@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { setCookie } from "~/cookie"; // si quieres guardar token
 import { useUser } from "~/utils/UserContext";
 
@@ -80,15 +80,20 @@ export function Login() {
                         </div>
                     </div>
 
-                    <div className="field mt-5">
-                        <div className="control">
-                            <button type="submit" className="button is-primary is-fullwidth">
-                                Login
-                            </button>
-                        </div>
+                    <Link to="/register" className="is-size-7 has-text-grey">
+                        Don’t have an account?
+                    </Link>
+                    <div className="field mt-5 is-flex is-justify-content-between is-align-items-center">
+                        <button type="submit" className="button is-primary is-fullwidth">
+                            Login
+                        </button>
                     </div>
                 </form>
+
             </div>
+            <Link to="/" className="button is-large mt-5">
+                Exit to Gallery
+            </Link>
         </main>
     );
 }

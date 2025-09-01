@@ -96,11 +96,11 @@ export async function updateQuestion(
 }
 
 
-export async function createQuestion(question: string, tags: string[], options: string[], answer: string) {
+export async function createQuestion(user: User, question: string, tags: string[], options: string[], answer: string) {
 
     const res = secureFetch("POST", "/api/question/create",
         {
-            user_name: sessionStorage.getItem("username"),
+            user_name: user.name,
             question_text: question,
             options,
             answer,
@@ -203,6 +203,38 @@ export async function updateUser(user: User, newName: string | null, newEmail: s
 }
 
 
+
+export async function registerUser(name: string, email: string, password: string) {
+    try {
+        const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, email, password }),
+        });
+
+        let json: any = null;
+        try {
+            json = await res.json();
+            console.log(json);
+
+        } catch {
+            json = { success: res.ok, data: null };
+        }
+
+        if (!res.ok || json?.success === false) {
+            const message =
+                json?.message ||
+                (json?.error ? json.error.toString() : `Request failed with status ${res.status}`);
+            return Result.err(message);
+        }
+
+        return Result.ok(json?.data ?? {});
+    } catch (err) {
+        return Result.err(err instanceof Error ? err.message : "Unknown error during fetch");
+    }
+}
 
 
 export function scrollToElement(selector: string) {

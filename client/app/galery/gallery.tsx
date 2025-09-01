@@ -16,7 +16,6 @@ export function Gallery() {
     const { user, hasPermission, hasPermissions } = useUser();
     const [offsetY, setOffsetY] = useState(0);
 
-    // Listener para scroll
     const handleScroll = () => {
         setOffsetY(window.scrollY);
     };
@@ -24,7 +23,6 @@ export function Gallery() {
     useEffect(() => {
         window.addEventListener("scroll", handleScroll);
 
-        // cleanup cuando el componente se desmonta
         return () => {
             window.removeEventListener("scroll", handleScroll);
         };
@@ -41,6 +39,18 @@ export function Gallery() {
         useFetch<User[]>("/api/users");
 
     const [activeTab, setActiveTab] = useState<"questions" | "collections" | "users">("collections");
+
+    useEffect(() => {
+        const v = sessionStorage.getItem("activeTab") as "questions" | "collections" | "users" | null;
+        if (v === "questions" || v === "collections" || v === "users") {
+            setActiveTab(v);
+        }
+    }, []);
+
+    useEffect(() => {
+        sessionStorage.setItem("activeTab", activeTab);
+    }, [activeTab])
+
 
     const [isMenuOpen, openMenu] = useState(false);
 
@@ -110,7 +120,7 @@ export function Gallery() {
     }, [users, search]);
 
     const usersContent = filteredUsers.map((luser, key) => (
-        <UserGalleryItem key={luser.name} user={luser} editable={hasPermission("EDIT_USER") && user?._id === luser._id} onUpdate={refreshUsers} />
+        <UserGalleryItem key={luser.name} user={luser} editable={hasPermission("EDIT_USER") || (user?._id === luser._id)} onUpdate={refreshUsers} />
     ));
 
     const renderContent = () => {
@@ -118,8 +128,6 @@ export function Gallery() {
         if (activeTab === "questions") return questionsContent;
         return usersContent;
     };
-
-
 
     if (isLoadingCollections) {
         return (
@@ -205,25 +213,61 @@ export function Gallery() {
                     </h1>
                     <h2 className="subtitle is-4 mb-5">Search quizzes and questions</h2>
 
-                    <nav className="panel" >
-                        <div className="panel-block">
-                            <p className="control has-icons-left">
-                                <input className="input" type="text" placeholder="Search" value={search} onChange={(e) => { setSearch(e.target.value) }} />
-                                <span className="icon is-left">
-                                    <i className="fas fa-search" aria-hidden="true"></i>
-                                </span>
-                            </p>
+                    <nav className="panel">
+                        <div className="panel-block is-flex is-align-items-center">
+                            <div className="field has-addons is-flex-grow-1">
+                                <div className="control has-icons-left is-expanded">
+                                    <input
+                                        className="input"
+                                        type="text"
+                                        placeholder="Search..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                    <span className="icon is-left">
+                                        <i className="fas fa-search" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                                {search && (
+                                    <div className="control">
+                                        <button
+                                            type="button"
+                                            className="button is-light"
+                                            onClick={() => setSearch("")}
+                                        >
+                                            <span className="icon">
+                                                <i className="fas fa-times"></i>
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="tabs">
-                            <ul>
-                                <li className={activeTab === "collections" ? "is-active" : ""}><a onClick={() => setActiveTab("collections")} >Collections</a></li>
-                                <li className={activeTab === "questions" ? "is-active" : ""}><a onClick={() => setActiveTab("questions")}>Questions</a></li>
-                                {
-                                    hasPermission("ADMIN") && (<li className={activeTab === "users" ? "is-active" : ""}><a onClick={() => setActiveTab("users")}>Users</a></li>)
-                                }
-                            </ul>
+
+                        <div className="panel-tabs is-flex is-justify-content-center">
+                            <a
+                                className={activeTab === "collections" ? "is-active" : ""}
+                                onClick={() => setActiveTab("collections")}
+                            >
+                                Collections
+                            </a>
+                            <a
+                                className={activeTab === "questions" ? "is-active" : ""}
+                                onClick={() => setActiveTab("questions")}
+                            >
+                                Questions
+                            </a>
+                            {hasPermission("ADMIN") && (
+                                <a
+                                    className={activeTab === "users" ? "is-active" : ""}
+                                    onClick={() => setActiveTab("users")}
+                                >
+                                    Users
+                                </a>
+                            )}
                         </div>
                     </nav>
+
                 </div>
 
                 <div className="columns is-multiline is-variable is-3 px-5" style={{ minHeight: "80vh" }}>

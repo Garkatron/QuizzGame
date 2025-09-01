@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getCookie } from "~/cookie";
+import { useUser } from "~/utils/UserContext";
 import { createQuestion } from "~/utils/utils";
 
 type QuestionsFormModalProps = {
@@ -13,6 +14,8 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
     const [answers, setAnswers] = useState<string[]>([]);
     const [questionText, setQuestionText] = useState("");
     const [tags, setTags] = useState("");
+    const [correctAnswerIndex, setCorrectAnswerIndex] = useState(0);
+    const { user } = useUser();
 
     // * Functions
     const addQuestion = (): void => {
@@ -31,7 +34,13 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
 
     // * POST
     const handleCreateQuestion = async () => {
-        const res = await createQuestion(questionText, tags.split(",").map(t => t.trim()), answers, answers[0]);
+        if (!user) {
+            alert("User null");
+            return null;
+        }
+
+        const res = await createQuestion(user, questionText, tags.split(",").map(t => t.trim()), answers, answers[correctAnswerIndex]);
+
         if (res.isOk) {
             return res.value._id;
         } else {
@@ -77,12 +86,18 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                         </div>
                     </div>
 
-                    {/* Answers */}
                     <div className="field">
                         <label className="label">Answers</label>
-                        {/* Answer */}
                         {answers.map((answer, idx) => (
-                            < div key={idx} className="field has-addons mb-2" >
+                            <div key={idx} className="field has-addons mb-2">
+                                <div className="control">
+                                    <input
+                                        type="radio"
+                                        name="correctAnswer"
+                                        checked={correctAnswerIndex === idx}
+                                        onChange={() => setCorrectAnswerIndex(idx)}
+                                    />
+                                </div>
                                 <div className="control is-expanded">
                                     <input
                                         className="input"
@@ -104,7 +119,6 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                 </div>
                             </div>
                         ))}
-                        {/* Add question button */}
                         <button
                             type="button"
                             className="button is-success"
