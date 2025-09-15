@@ -11,7 +11,6 @@ export function CollectionGalleryItem({ collection, editable = false, onUpdate }
 
     const [isActive, setActive] = useState(false);
 
-
     return (
         <div className="column is-12-mobile is-6-tablet is-4-desktop is-3-widescreen">
             <div className="box has-text-centered p-5">

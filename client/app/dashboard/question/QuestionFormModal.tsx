@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { getCookie } from "~/cookie";
 import { useUser } from "~/utils/UserContext";
 import { createQuestion } from "~/utils/utils";
@@ -14,39 +14,59 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
     const [answers, setAnswers] = useState<string[]>([]);
     const [questionText, setQuestionText] = useState("");
     const [tags, setTags] = useState("");
-    const [correctAnswerIndex, setCorrectAnswerIndex] = useState(0);
+    const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
     const { user } = useUser();
 
     // * Functions
-    const addQuestion = (): void => {
+    const addAnswer = useCallback(() => {
         setAnswers([...answers, ""]);
-    }
+    }, [answers]);
 
-    const deleteQuestion = (index: number): void => {
-        setAnswers(answers.filter((_, i) => i !== index));
-    }
+    const deleteAnswer = useCallback((index: number): void => {
+        setAnswers((prev) => {
+            const updated = answers.filter((_, i) => i !== index);
+            if (correctAnswerIndex === index) {
+                return updated;
+            }
+            if (correctAnswerIndex !== null && correctAnswerIndex > index) {
+                setCorrectAnswerIndex(correctAnswerIndex - 1);
+            }
+            return updated;
 
-    const updateQuestion = (index: number, value: string): void => {
-        const updated = [...answers];
-        updated[index] = value;
-        setAnswers(updated);
-    }
+        });
+    }, [correctAnswerIndex]);
+
+    const updateAnswer = useCallback((index: number, value: string): void => {
+        setAnswers((prev) => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    }, []);
 
     // * POST
-    const handleCreateQuestion = async () => {
-        if (!user) {
-            alert("User null");
-            return null;
-        }
+    const handleCreateQuestion = useCallback(async () => {
 
-        const res = await createQuestion(user, questionText, tags.split(",").map(t => t.trim()), answers, answers[correctAnswerIndex]);
-
+        const res = await createQuestion(
+            user,
+            questionText,
+            tags.split(",").map((t) => t.trim()).filter(Boolean),
+            answers,
+            answers[correctAnswerIndex || 0] || ""
+        );
         if (res.isOk) {
             return res.value._id;
         } else {
             alert(res.error)
             return null;
         }
+    }, [answers]);
+
+    const resetForm = () => {
+        setQuestionText("");
+        setTags("");
+        setAnswers([]);
+        setCorrectAnswerIndex(null);
     };
 
     // * JSX
@@ -103,7 +123,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                         className="input"
                                         type="text"
                                         value={answer}
-                                        onChange={(e) => updateQuestion(idx, e.target.value)}
+                                        onChange={(e) => updateAnswer(idx, e.target.value)}
                                         placeholder={`Answer ${idx + 1}`}
                                         required
                                     />
@@ -112,7 +132,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                     <button
                                         type="button"
                                         className="button is-danger"
-                                        onClick={() => deleteQuestion(idx)}
+                                        onClick={() => deleteAnswer(idx)}
                                     >
                                         Remove
                                     </button>
@@ -122,7 +142,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                         <button
                             type="button"
                             className="button is-success"
-                            onClick={addQuestion}
+                            onClick={addAnswer}
                         >
                             +
                         </button>
@@ -136,6 +156,7 @@ export function QuestionFormModal({ active = false, onAddQuestion }: QuestionsFo
                                 onClick={async () => {
                                     const id = await handleCreateQuestion();
                                     onAddQuestion(id);
+                                    resetForm();
                                 }}
                                 className="button is-primary is-fullwidth"
                             >

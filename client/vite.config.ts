@@ -13,6 +13,9 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path
       }
-    }
+    },
+    fs: {
+      strict: true,
+    },
   }
 });

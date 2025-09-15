@@ -13,7 +13,6 @@ import { authorize_permissions, middleware_authenticate_token } from "./middlewa
 // * See ./middleware.js
 // * ------------------------------------------------------------------------------------------
 
-
 /**
  * Create the authentication endpoints.
  * @param {*} app - Express app instance
@@ -239,6 +238,7 @@ export default function MakeEndpoints(app) {
             if (!Array.isArray(tags)) {
                 return send_response_unsuccessful(res, [INVALID_TAGS_ARRAY]);
             }
+
             if (!options.includes(answer)) {
                 return send_response_unsuccessful(res, [OPTIONS_MUST_INCLUDE_ANSWER]);
             }
@@ -248,7 +248,7 @@ export default function MakeEndpoints(app) {
             const existing = await Question.findOne({ question: question_text, owner: user._id });
 
             if (existing) {
-                return send_response_unsuccessful(res, [QUESTION_ALREADY_EXISTS]);
+                return send_response_successful(res, [QUESTION_ALREADY_EXISTS], existing);
             }
 
             const newQuestion = new Question({ question: question_text, options, answer, tags, owner: user._id });

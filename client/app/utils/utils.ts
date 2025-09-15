@@ -98,7 +98,7 @@ export async function updateQuestion(
 
 export async function createQuestion(user: User, question: string, tags: string[], options: string[], answer: string) {
 
-    const res = secureFetch("POST", "/api/question/create",
+    const res = await secureFetch("POST", "/api/question/create",
         {
             user_name: user.name,
             question_text: question,
@@ -106,7 +106,7 @@ export async function createQuestion(user: User, question: string, tags: string[
             answer,
             tags
         }
-    )
+    );
 
 
     return res;
@@ -124,7 +124,7 @@ export async function getQuestionByID(qid: string) {
     return await secureFetch("GET", `/api/questions/id/${qid}`);
 }
 
-export async function addCollectionByID(qid: string) {
+export async function getCollectionByID(qid: string) {
     try {
         const res = await fetch(`/api/collections/id/${qid}`);
 

@@ -1,5 +1,5 @@
 import { scrollToElement, useFetch } from "~/utils/utils";
-import { CollectionGalleryItem } from "./CollectionGalleryItem";
+import { CollectionGalleryItem } from "../dashboard/collection/CollectionGalleryItem";
 import type { Collection, Question, User } from "~/utils/owntypes";
 import { useEffect, useMemo, useState } from "react";
 import "./custom.css";

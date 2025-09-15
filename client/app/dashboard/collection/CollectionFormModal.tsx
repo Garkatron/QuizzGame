@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { QuestionFormModal } from "../question/QuestionFormModal";
 import { getCookie } from "~/cookie";
 import type { Question } from "~/utils/owntypes";
 import { QuestionGalleryItem } from "../question/QuestionGalleryItem";
-import { addCollectionByID, getQuestionByID, deleteCollection, updateCollection, createCollection } from "~/utils/utils";
+import { getCollectionByID, getQuestionByID, deleteCollection, updateCollection, createCollection } from "~/utils/utils";
 
 type CollectionFormModalProps = {
     active?: boolean;
@@ -12,39 +12,30 @@ type CollectionFormModalProps = {
 };
 
 export function CollectionFormModal({ active = false, id = null, onClose }: CollectionFormModalProps) {
-    // * State
     const [questions, setQuestions] = useState<Question[]>([]);
     const [collectionName, setCollectionName] = useState<string>("");
-    const [isQuestionMenuOpen, openQuestionMenu] = useState<boolean>(false);
+    const [isQuestionMenuOpen, setIsQuestionMenuOpen] = useState<boolean>(false);
     const [ownerId, setOwnerId] = useState<string>("");
-    const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-
-    // * Functions
-    const handleDeleteQuestion = (idx: number) => {
-        setQuestions((prev) => prev.filter((_, i) => i !== idx));
-    };
-
-
-    // * If edit
-    if (id) {
-        useEffect(() => {
-            // * Questions by owner
-
+    useEffect(() => {
+        if (!id) return;
+        (async () => {
             try {
-                addCollectionByID(id).then((data) => {
-                    setQuestions(data.questions);
-                    setCollectionName(data.name);
-                    setOwnerId(data.owner);
-                });
+                const data = await getCollectionByID(id);
+                setQuestions(data.questions);
+                setCollectionName(data.name);
+                setOwnerId(data.owner);
             } catch (error) {
                 alert(error);
             }
-        }, []);
-    }
+        })();
+    }, [id]);
 
-    // * Post
-    const handleCreateCollection = async () => {
+    const handleDeleteQuestion = useCallback((idx: number) => {
+        setQuestions((prev) => prev.filter((_, i) => i !== idx));
+    }, []);
+
+    const handleCreateCollection = useCallback(async () => {
         const res = await createCollection(questions, [], collectionName);
 
         if (res.isErr) {
@@ -52,32 +43,39 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
         }
 
         onClose();
-    };
+    }, [questions, collectionName, onClose]);
 
-    const handleSaveCollection = async () => {
+    const handleSaveCollection = useCallback(async () => {
         if (!id) return;
-
-        const res = await updateCollection({ _id: id, owner: ownerId, name: collectionName, questions, tags: [] });
-
-        if (res.isErr) {
-            alert(res.error);
-        }
-
+        const res = await updateCollection({
+            _id: id,
+            owner: ownerId,
+            name: collectionName,
+            questions,
+            tags: []
+        });
+        if (res.isErr) return alert(res.error);
         onClose();
-    };
+    }, [id, ownerId, collectionName, questions, onClose]);
 
-    const handleDeleteCollection = async () => {
+    const handleDeleteCollection = useCallback(async () => {
+        if (!id) return;
         const res = await deleteCollection(ownerId, id);
-        if (res.isErr) {
-            alert("Error deleting collection: " + res.error);
+        if (res.isErr) alert("Error deleting collection: " + res.error);
+        onClose();
+    }, [id, ownerId, onClose]);
+
+    const handleAddQuestion = useCallback(async (question_id: string | null) => {
+        if (question_id) {
+            const newQ = await getQuestionByID(question_id);
+            if (newQ.isErr) {
+                alert(newQ.error);
+            } else {
+                setQuestions((prev) => [...prev, newQ.value]);
+            }
         }
-        onClose();
-    };
-
-    const handleCancelCollection = () => {
-        onClose();
-
-    };
+        setIsQuestionMenuOpen(false);
+    }, []);
 
     // * JSX
     return (
@@ -115,7 +113,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                                             small={true}
                                             question={question}
                                             editable={true}
-                                            onUpdate={() => { openQuestionMenu(false) }}
+                                            onUpdate={() => { setIsQuestionMenuOpen(false) }}
                                         />
                                     </div>
                                     <div className="control">
@@ -130,7 +128,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                                 </div>
                             ))}
 
-                            <button onClick={() => openQuestionMenu(true)} className="button mt-2" type="button">+ Add Question</button>
+                            <button onClick={() => setIsQuestionMenuOpen(true)} className="button mt-2" type="button">+ Add Question</button>
                         </div>
                     </div>
 
@@ -156,7 +154,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
                                     <button type="button" onClick={handleCreateCollection} className="button is-primary is-fullwidth">
                                         Create
                                     </button>
-                                    <button type="button" onClick={handleCancelCollection} className="button is-light is-fullwidth">
+                                    <button type="button" onClick={onClose} className="button is-light is-fullwidth">
                                         Cancel
                                     </button>
                                 </>
@@ -170,17 +168,7 @@ export function CollectionFormModal({ active = false, id = null, onClose }: Coll
             // * FORM
             <QuestionFormModal
                 active={isQuestionMenuOpen}
-                onAddQuestion={async (question_id: string | null) => {
-                    if (question_id) {
-                        const newQ = await getQuestionByID(question_id);
-                        if (newQ.isErr) {
-                            alert(newQ.error);
-                        } else {
-                            setQuestions((prev) => [...prev, newQ.value]);
-                        }
-                    }
-                    openQuestionMenu(false);
-                }}
+                onAddQuestion={handleAddQuestion}
             />
             <button onClick={onClose} className="modal-close is-large" aria-label="close"></button>
         </div>
