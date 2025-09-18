@@ -71,7 +71,7 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
  * /api/question/edit:
  *   post:
  *     summary: Edit a question
- *     description: Update a question in the database. Only the owner or an admin with EDIT_QUESTION permission can perform this action. Currently receives { id, field, value }, but TODO: update to receive the full question object.
+ *     description: Update a question in the database. Only the owner or an admin with EDIT_QUESTION permission can perform this action. 
  *     tags:
  *       - Questions
  *     security:
