@@ -48,9 +48,6 @@ app.post('/', (req, res) => {
 // ! Temporary solution
 app.use("/shared", express.static(path.join(__dirname, "../shared")));
 
-app.listen(app.get("port"), () => {
-    console.log(`Server running on port ${app.get("port")}`);
-});
 
 app.use("/api/user", userRoutes);
 app.use("/api/question", questionRoutes);
@@ -72,5 +69,8 @@ server.listen(CONFIG.SERVER_PORT, () => {
     console.log(`Server running at port ${CONFIG.SERVER_PORT}`);
 });
 
+app.listen(app.get("port"), () => {
+    console.log(`Server running on port ${app.get("port")}`);
+});
 
 

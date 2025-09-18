@@ -1,7 +1,7 @@
 import express from "express";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js"
-import { createCollection, deleteCollection, editCollection, getCollections, getCollectionsByID, getCollectionsByOwner } from "../controllers/CollectionController.js";
+import { createCollection, deleteCollection, editCollection, getCollections } from "../controllers/CollectionController.js";
 
 const router = express.Router();
 
@@ -228,88 +228,40 @@ router.post("/api/collection/edit", middleware_authenticate_token, authorize_per
  */
 router.post("/api/collection/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
 
+/*
 router.get("/api/collections/id/:id", getCollectionsByID);
 
 // ? Receive { ownername }, get all collections of a specific user, including questions.
 router.get("/api/collections/owner/:ownername", getCollectionsByOwner);
+*/
 
 /**
  * @swagger
- * /api/collections:
- *   get:
- *     summary: Get all quiz collections
- *     description: Retrieve all quiz collections in the database, including their questions.
+ * /api/collection/filter:
+ *   post:
+ *     summary: Get filtered quiz collections
+ *     description: Retrieve quiz collections using a filter object in the body.
  *     tags:
  *       - Collections
- *     security:
- *       - bearerAuth: []   # JWT opcional según tu política de seguridad
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Quiz de Cultura General"
  *     responses:
  *       200:
- *         description: List of all quiz collections
+ *         description: List of filtered quiz collections
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                         example: 64f6b8d8c3d9e12f7e9c1234
- *                       name:
- *                         type: string
- *                         example: Geography Quiz
- *                       tags:
- *                         type: array
- *                         items:
- *                           type: string
- *                         example: ["geography","capitals"]
- *                       questions:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             _id:
- *                               type: string
- *                               example: 64f5a9b7c3d9e12f7e9b4567
- *                             question_text:
- *                               type: string
- *                               example: What is the capital of France?
- *                             options:
- *                               type: array
- *                               items:
- *                                 type: string
- *                               example: ["Paris","London","Berlin","Rome"]
- *                             answer:
- *                               type: string
- *                               example: Paris
- *                             tags:
- *                               type: array
- *                               items:
- *                                 type: string
- *                               example: ["geography","capital"]
- *       400:
- *         description: Bad request
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 errors:
- *                   type: array
- *                   items:
- *                     type: string
- *                     example: Invalid parameters
+ *               $ref: '#/components/schemas/QuizzCollection'
  */
-router.get("/api/collections", getCollections);
+router.post("/filter", getCollections);
+
 
 export default router;

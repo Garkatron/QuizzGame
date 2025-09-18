@@ -1,9 +1,11 @@
-import QuizzCollection from "../models/QuizzCollection.js"
+import QuizzCollection from "../models/QuizzCollection.js";
+import Question from "../models/Question.js";
 import { send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import { ERROR_MESSAGES } from "../constants.js";
 import { is_valid_string } from "../utils/format.js";
 import { has_ownership_or_admin } from "../utils/utils.js";
 import { user_exists } from "../controllers/UserController.js";
+import { sanitize } from "../utils/sanitize.js";
 
 export const createCollection = async (req, res) => {
     try {
@@ -96,6 +98,30 @@ export const deleteCollection = async (req, res) => {
     }
 }
 
+export const getCollections = async (req, res) => {
+    try {
+        const { name, id, owner, tags, questions } = req.body;
+        const page = parseInt(req.body.page) || 1;
+        const limit = parseInt(req.body.limit) || 20;
+
+        const query = {};
+        if (id) query._id = id;
+        if (name) query.name = name;
+        if (owner) query.owner = owner;
+        if (tags) query.tags = { $in: tags.map(sanitize) };
+        if (questions) query.questions = { $all: questions };
+
+        const quizzCollections = await QuizzCollection.find(query)
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .populate("questions");
+        return send_response_successful(res, "Quizz Collections", quizzCollections);
+    } catch (error) {
+        return send_response_unsuccessful(res, [error.message]);
+    }
+}
+
+/*
 export const getCollectionsByID = async (req, res) => {
     try {
         const { id } = req.params;
@@ -123,7 +149,7 @@ export const getCollectionsByOwner = async (req, res) => {
     }
 }
 
-export const getCollections = async (req, res) => {
+export const getCollections2 = async (req, res) => {
     try {
         const quizzCollections = await QuizzCollection.find();
         return send_response_successful(res, "Quizz Collections", quizzCollections);
@@ -131,3 +157,4 @@ export const getCollections = async (req, res) => {
         return send_response_unsuccessful(res, [error.message]);
     }
 }
+    */
