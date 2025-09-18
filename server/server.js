@@ -8,6 +8,9 @@ import path from "path";
 import MultiplayerLogic from "./game/multiplayer.js"
 import { SERVER_PORT } from "./constants.js";
 import dotenv from "dotenv";
+import userRoutes from "./routes/UserRoutes.js";
+import questionRoutes from "./routes/QuestionRoutes.js";
+import collectionRoutes from "./routes/CollectionRoutes.js";
 
 dotenv.config();
 
@@ -18,6 +21,12 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 app.use(express.static('public'));
+// ? Root endpoint, returns a welcome message.
+
+router.post('/', (req, res) => {
+    res.send('<h1>Hello from Deus Quizzes server!</h1>');
+});
+
 
 // ! Temporary solution
 app.use("/shared", express.static(path.join(__dirname, "../shared")));
@@ -25,6 +34,10 @@ app.use("/shared", express.static(path.join(__dirname, "../shared")));
 app.listen(app.get("port"), () => {
     console.log(`Server running on port ${app.get("port")}`);
 });
+
+app.use("/api/user", userRoutes);
+app.use("/api/question", questionRoutes);
+app.use("/api/collection", collectionRoutes);
 
 await connectDB();
 const server = http.createServer(app);
