@@ -1,11 +1,9 @@
-import User from "../models/User";
-import { UserPermissions } from "../constants.js"
-import { has_valid_email, has_valid_name, has_valid_password } from "../utils/format.js";
+import { has_valid_email, has_valid_name, has_valid_password, is_valid_string } from "../utils/format.js";
 import { compare_password, hash_password } from "../utils/hashing.js";
 import { ERROR_MESSAGES, UserPermissions } from "../constants.js";
-import { send_response_successful, send_response_unsuccessful, user_exists, is_valid_string, has_ownership_or_admin } from "../utils/responses.js"
-
+import { send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import User from "../models/User.js";
+import { has_ownership_or_admin } from "../utils/utils.js";
 
 export const registerUser = async (req, res) => {
     try {

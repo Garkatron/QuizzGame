@@ -4,4 +4,5 @@ const tagsSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true, trim: true }
 });
 
-export const Category = mongoose.model("Category", tagsSchema);
+const Category = mongoose.model("Category", tagsSchema);
+export default Category;

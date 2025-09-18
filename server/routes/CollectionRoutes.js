@@ -22,3 +22,5 @@ router.get("/api/collections/owner/:ownername", getCollectionsByOwner);
 
 // ? Get all quiz collections in the database.
 router.get("/api/collections", getCollections);
+
+export default router;

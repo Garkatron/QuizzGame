@@ -7,5 +7,5 @@ const questionSchema = new mongoose.Schema({
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     tags: [{ type: String }],
 });
-export const Question = mongoose.model("Question", questionSchema);
-
+const Question = mongoose.model("Question", questionSchema);
+export default Question;

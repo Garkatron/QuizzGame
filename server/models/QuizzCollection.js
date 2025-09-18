@@ -6,4 +6,6 @@ const quizzCollectionSchema = new mongoose.Schema({
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     questions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }]
 });
-export const QuizzCollection = mongoose.model("QuizzCollection", quizzCollectionSchema);
+
+const QuizzCollection = mongoose.model("QuizzCollection", quizzCollectionSchema);
+export default QuizzCollection;

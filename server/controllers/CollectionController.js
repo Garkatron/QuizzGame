@@ -1,6 +1,9 @@
-import { QuizzCollection } from "../models/QuizzCollection.js"
-import { send_response_successful, send_response_unsuccessful, user_exists, is_valid_string, has_ownership_or_admin } from "../utils/responses.js"
+import QuizzCollection from "../models/QuizzCollection.js"
+import { send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import { ERROR_MESSAGES } from "../constants.js";
+import { is_valid_string } from "../utils/format.js";
+import { has_ownership_or_admin } from "../utils/utils.js";
+import { user_exists } from "../controllers/UserController.js";
 
 export const createCollection = async (req, res) => {
     try {

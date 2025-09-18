@@ -1,6 +1,7 @@
 import express from "express";
-import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestionsByOwner } from "../controllers/QuestionController";
+import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestionsByOwner } from "../controllers/QuestionController.js";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
+import { UserPermissions } from "../constants.js";
 
 const router = express.Router();
 
@@ -22,3 +23,5 @@ router.get("/id/:id", getQuestionByID);
 
 // ? Get all questions in the database.
 router.get("/", getQuestionByID);
+
+export default router;
