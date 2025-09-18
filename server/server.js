@@ -10,21 +10,38 @@ import userRoutes from "./routes/UserRoutes.js";
 import questionRoutes from "./routes/QuestionRoutes.js";
 import collectionRoutes from "./routes/CollectionRoutes.js";
 
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+
+const swaggerOptions = {
+    definition: {
+        openapi: "3.0.0",
+        info: {
+            title: "My API",
+            version: "1.0.0"
+        }
+    },
+    apis: ["./routes/*.js"]
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
 dotenv.config();
 
 const app = express();
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 app.use(express.static('public'));
-// ? Root endpoint, returns a welcome message.
 
+
+// ? Root endpoint, returns a welcome message.
 app.post('/', (req, res) => {
     res.send('<h1>Hello from Deus Quizzes server!</h1>');
 });
-
 
 // ! Temporary solution
 app.use("/shared", express.static(path.join(__dirname, "../shared")));

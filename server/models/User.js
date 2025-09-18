@@ -12,5 +12,13 @@ const userSchema = new mongoose.Schema({
     }
 });
 
+// ? Avoid show password when get transformed to JSON.
+userSchema.set("toJSON", {
+    transform: function (doc, ret) {
+        delete ret.password;
+        return ret;
+    }
+});
+
 const User = mongoose.model("User", userSchema);
 export default User;
