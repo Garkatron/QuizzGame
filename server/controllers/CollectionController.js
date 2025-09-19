@@ -150,9 +150,24 @@ export const getCollectionsByOwner = async (req, res) => {
 
 export const getCollections = async (req, res) => {
     try {
-        const quizzCollections = await QuizzCollection.find();
+        const { name, id, owner, tags, questions, page, limit } = req.query;
+        const pageInt = parseInt(page) || 1;
+        const limitInt = parseInt(limit) || 20;
+
+        const query = {};
+        if (id) query._id = id;
+        if (name) query.name = { $regex: sanitize(name), $options: "i" };
+        if (owner) query.owner = owner;
+        if (tags) query.tags = { $in: tags.map(sanitize) };
+        if (questions) query.questions = { $all: questions };
+
+        const quizzCollections = await QuizzCollection.find(query)
+            .skip((pageInt - 1) * limitInt)
+            .limit(limitInt)
+            .populate("questions");
         return send_response_successful(res, "Quizz Collections", quizzCollections);
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);
     }
 }
+

@@ -4,6 +4,7 @@ import { ERROR_MESSAGES, UserPermissions } from "../constants.js";
 import { send_response_created, send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import User from "../models/User.js";
 import { has_ownership_or_admin } from "../utils/utils.js";
+import { sanitize } from "../utils/sanitize.js";
 
 export const registerUser = async (req, res) => {
     try {
@@ -129,10 +130,20 @@ export const editUser = async (req, res) => {
 
 export const getUsers = async (req, res) => {
     try {
+        const { name, id, email, page, limit } = req.query;
+        const pageInt = parseInt(page) || 1;
+        const limitInt = parseInt(limit) || 20;
 
-        const users = await User.find().select("name username permissions");
+        const query = {};
+        if (id) query._id = id;
+        if (name) query.name = { $regex: sanitize(name), $options: "i" };
+        if (email) query.email = sanitize(email);
 
-        return send_response_successful(res, "Login successful", users);
+        const users = await User.find(query).select("name username permissions")
+            .skip((pageInt - 1) * limitInt)
+            .limit(limitInt);
+
+        return send_response_successful(res, "Users", users);
 
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);

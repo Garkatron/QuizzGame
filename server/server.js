@@ -49,9 +49,9 @@ app.post('/', (req, res) => {
 app.use("/shared", express.static(path.join(__dirname, "../shared")));
 
 
-app.use("/api/v1/user", userRoutes);
-app.use("/api/v1/question", questionRoutes);
-app.use("/api/v1/collection", collectionRoutes);
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/questions", questionRoutes);
+app.use("/api/v1/collections", collectionRoutes);
 
 await connectDB();
 const server = http.createServer(app);
@@ -62,8 +62,6 @@ const io = new Server(server, {
         methods: ["GET", "POST"],
     },
 });
-
-
 
 server.listen(CONFIG.SERVER_PORT, () => {
     console.log(`Server running at port ${CONFIG.SERVER_PORT}`);

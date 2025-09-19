@@ -8,10 +8,11 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/v1/user/register:
+ * /api/v1/users/register:
  *   post:
  *     summary: Register a new user
- *     description: Create a new user in the database with a unique email and a secure password.
+ *     description: Creates a new user in the database with a unique name and email, and a secure password.  
+ *                  Automatically assigns default permissions and sets the initial score to 0.
  *     tags:
  *       - Users
  *     requestBody:
@@ -27,12 +28,15 @@ const router = express.Router();
  *             properties:
  *               name:
  *                 type: string
+ *                 description: Unique username of the new user
  *                 example: Alice
  *               email:
  *                 type: string
+ *                 description: Unique email address of the user
  *                 example: alice@mail.com
  *               password:
  *                 type: string
+ *                 description: Strong password for the user account
  *                 example: MyStrongPass123!
  *     responses:
  *       201:
@@ -42,6 +46,9 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: User created successfully
@@ -59,15 +66,42 @@ const router = express.Router();
  *                       example: alice@mail.com
  *       400:
  *         description: Invalid input or user already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: User already exists
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Unexpected server error
  */
 router.post("/register", registerUser);
 
 /**
  * @swagger
- * /api/v1/user/login:
+ * /api/v1/users/login:
  *   post:
- *     summary: Login a user
- *     description: Validate user credentials and return a JWT access token.
+ *     summary: User login
+ *     description: |
+ *       Authenticates a user with their username and password.  
+ *       If the credentials are valid, returns user information along with a JWT access token for authorization.  
+ *       The access token should be used in the `Authorization` header for protected routes.
  *     tags:
  *       - Users
  *     requestBody:
@@ -82,9 +116,11 @@ router.post("/register", registerUser);
  *             properties:
  *               name:
  *                 type: string
+ *                 description: The username of the user
  *                 example: Alice
  *               password:
  *                 type: string
+ *                 description: The user's password
  *                 example: MyStrongPass123!
  *     responses:
  *       200:
@@ -94,6 +130,9 @@ router.post("/register", registerUser);
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: Login successful
@@ -102,38 +141,58 @@ router.post("/register", registerUser);
  *                   properties:
  *                     user:
  *                       type: object
+ *                       description: Logged-in user's details
  *                       properties:
  *                         _id:
  *                           type: string
+ *                           description: User unique identifier
  *                           example: 64f4f9c6a2b1a3f9d7e9b123
  *                         name:
  *                           type: string
+ *                           description: Username
  *                           example: Alice
  *                         email:
  *                           type: string
+ *                           description: User's email
  *                           example: alice@mail.com
  *                         permissions:
  *                           type: object
+ *                           description: User permissions, where keys are permission names and values are boolean
  *                           additionalProperties:
  *                             type: boolean
  *                     accessToken:
  *                       type: string
+ *                       description: JWT token for authenticating protected routes
  *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
- *         description: Missing parameters
+ *         description: Invalid credentials or missing parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid username or password
  */
 router.post("/login", loginUser);
 
 /**
  * @swagger
- * /api/v1/user/delete:
- *   post:
+ * /api/v1/users/delete:
+ *   delete:
  *     summary: Delete a user
- *     description: Delete a user from the database. Only the account owner or an admin with DELETE_USER permission can perform this action.
+ *     description: |
+ *       Deletes a user from the database.  
+ *       Only the account owner or an admin with the `DELETE_USER` permission can perform this action.  
+ *       Requires a valid JWT in the `Authorization` header.
  *     tags:
  *       - Users
  *     security:
- *       - bearerAuth: []   # Requiere JWT
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -145,6 +204,7 @@ router.post("/login", loginUser);
  *             properties:
  *               name:
  *                 type: string
+ *                 description: The username of the account to be deleted
  *                 example: Alice
  *     responses:
  *       200:
@@ -165,6 +225,7 @@ router.post("/login", loginUser);
  *                       example: User deleted
  *                     user:
  *                       type: object
+ *                       description: Details of the deleted user
  *                       properties:
  *                         _id:
  *                           type: string
@@ -177,23 +238,51 @@ router.post("/login", loginUser);
  *                           example: alice@mail.com
  *                         permissions:
  *                           type: object
+ *                           description: User permissions before deletion
  *                           additionalProperties:
  *                             type: boolean
  *       400:
- *         description: Bad request / validation error
+ *         description: Bad request or validation error (invalid username or insufficient permissions)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid username or unauthorized
+ *       401:
+ *         description: Unauthorized (JWT missing or invalid)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
  */
-router.post("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), deleteUser);
+router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), deleteUser);
 
 /**
  * @swagger
- * /api/v1/user/edit:
- *   post:
+ * /api/v1/users/edit:
+ *   patch:
  *     summary: Edit a user
- *     description: Update the name, email, or password of a user. Only the account owner or an admin with EDIT_USER permission can perform this action.
+ *     description: |
+ *       Updates the name, email, or password of a user.  
+ *       Only the account owner or an admin with the `EDIT_USER` permission can perform this action.  
+ *       Requires a valid JWT in the `Authorization` header.
  *     tags:
  *       - Users
  *     security:
- *       - bearerAuth: []   # JWT requerido
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -205,15 +294,19 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
  *             properties:
  *               previousName:
  *                 type: string
+ *                 description: The current username of the account to update
  *                 example: Alice
  *               newName:
  *                 type: string
+ *                 description: New username (optional)
  *                 example: AliceNew
  *               newEmail:
  *                 type: string
+ *                 description: New email address (optional)
  *                 example: alice.new@mail.com
  *               newPassword:
  *                 type: string
+ *                 description: New password (optional)
  *                 example: NewStrongPass123!
  *     responses:
  *       200:
@@ -234,6 +327,7 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
  *                       example: User edited successfully
  *                     user:
  *                       type: object
+ *                       description: Updated user details
  *                       properties:
  *                         _id:
  *                           type: string
@@ -246,26 +340,86 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
  *                           example: alice.new@mail.com
  *                         permissions:
  *                           type: object
+ *                           description: User permissions after update
  *                           additionalProperties:
  *                             type: boolean
  *       400:
- *         description: Bad request / validation error
+ *         description: Bad request or validation error (invalid input or missing required fields)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid input or unauthorized
+ *       401:
+ *         description: Unauthorized (JWT missing or insufficient permissions)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
  */
-router.post("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), editUser);
+router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), editUser);
 
 /**
  * @swagger
- * /api/v1/user:
+ * /api/v1/users:
  *   get:
- *     summary: Get all users
- *     description: Retrieve an array of all users from the database.
+ *     summary: Get users
+ *     description: |
+ *       Retrieves a paginated list of users from the database.  
+ *       You can filter users by `id`, `name`, or `email` using query parameters.  
+ *       Optionally, you can paginate results using `page` and `limit`.  
+ *       Requires a valid JWT in the `Authorization` header if the endpoint is protected.
  *     tags:
  *       - Users
  *     security:
- *       - bearerAuth: []   # JWT requerido (si quieres protegerlo)
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         description: Filter by user ID
+ *         example: 64f4f9c6a2b1a3f9d7e9b123
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Filter by username (case-insensitive, partial match)
+ *         example: Alice
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filter by exact email
+ *         example: alice@mail.com
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of users per page
  *     responses:
  *       200:
- *         description: A list of users
+ *         description: List of users retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -274,6 +428,9 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
  *                 success:
  *                   type: boolean
  *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Users
  *                 data:
  *                   type: array
  *                   items:
@@ -290,10 +447,11 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
  *                         example: alice@mail.com
  *                       permissions:
  *                         type: object
+ *                         description: User permissions
  *                         additionalProperties:
  *                           type: boolean
  *       400:
- *         description: Bad request
+ *         description: Bad request / invalid query parameters
  *         content:
  *           application/json:
  *             schema:

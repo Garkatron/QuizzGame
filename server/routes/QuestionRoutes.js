@@ -7,7 +7,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/v1/question/delete:
+ * /api/v1/questions/delete:
  *   post:
  *     summary: Delete a question
  *     description: Delete a question from the database. Only the owner or an admin with DELETE_QUESTION permission can perform this action.
@@ -64,11 +64,11 @@ const router = express.Router();
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), deleteQuestion);
+router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), deleteQuestion);
 
 /**
  * @swagger
- * /api/v1/question/edit:
+ * /api/v1/questions/edit:
  *   post:
  *     summary: Edit a question
  *     description: Update a question in the database. Only the owner or an admin with EDIT_QUESTION permission can perform this action. 
@@ -136,11 +136,11 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]), editQuestion);
+router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]), editQuestion);
 
 /**
  * @swagger
- * /api/v1/question/create:
+ * /api/v1/questions/create:
  *   post:
  *     summary: Create a new question
  *     description: Create a new question in the database. Requires JWT and CREATE_QUESTION permission.
@@ -231,7 +231,7 @@ router.get("/id/:id", getQuestionByID);
 
 /**
  * @swagger
- * /api/v1/question:
+ * /api/v1/questions:
  *   get:
  *     summary: Get all questions
  *     description: Retrieve all questions from the database.

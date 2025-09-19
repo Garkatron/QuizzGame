@@ -7,7 +7,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/v1/collection/create:
+ * /api/v1/collections/create:
  *   post:
  *     summary: Create a new quiz collection
  *     description: Create a new quiz collection with a name, tags, and an array of question IDs. Requires JWT and CREATE_COLLECTION permission.
@@ -82,7 +82,7 @@ router.post("/create", middleware_authenticate_token, authorize_permissions([Use
 
 /**
  * @swagger
- * /api/v1/collection/edit:
+ * /api/v1/collections/edit:
  *   post:
  *     summary: Edit a quiz collection
  *     description: Update a quiz collection's name, tags, or questions. Only the owner or a user with EDIT_COLLECTION permission can perform this action.
@@ -158,11 +158,11 @@ router.post("/create", middleware_authenticate_token, authorize_permissions([Use
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), editCollection);
+router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), editCollection);
 
 /**
  * @swagger
- * /api/v1/collection/delete:
+ * /api/v1/collections/delete:
  *   post:
  *     summary: Delete a quiz collection
  *     description: Delete a quiz collection from the database. Only the owner or a user with DELETE_COLLECTION permission can perform this action.
@@ -226,18 +226,16 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
-
+router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
 
 router.get("/id/:id", getCollectionsByID);
 
 // ? Receive { ownername }, get all collections of a specific user, including questions.
 router.get("/owner/:ownername", getCollectionsByOwner);
 
-
 /**
  * @swagger
- * /api/v1/collection/filter:
+ * /api/v1/collections/filter:
  *   post:
  *     summary: Get filtered quiz collections
  *     description: Retrieve quiz collections using a filter object in the body.
