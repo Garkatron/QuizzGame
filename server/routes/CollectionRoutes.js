@@ -1,13 +1,13 @@
 import express from "express";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js"
-import { createCollection, deleteCollection, editCollection, getCollections } from "../controllers/CollectionController.js";
+import { createCollection, deleteCollection, editCollection, getCollections, getCollectionsByID, getCollectionsByOwner, getCollectionsFiltered } from "../controllers/CollectionController.js";
 
 const router = express.Router();
 
 /**
  * @swagger
- * /api/collection/create:
+ * /api/v1/collection/create:
  *   post:
  *     summary: Create a new quiz collection
  *     description: Create a new quiz collection with a name, tags, and an array of question IDs. Requires JWT and CREATE_COLLECTION permission.
@@ -78,11 +78,11 @@ const router = express.Router();
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/api/collection/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]), createCollection);
+router.post("/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]), createCollection);
 
 /**
  * @swagger
- * /api/collection/edit:
+ * /api/v1/collection/edit:
  *   post:
  *     summary: Edit a quiz collection
  *     description: Update a quiz collection's name, tags, or questions. Only the owner or a user with EDIT_COLLECTION permission can perform this action.
@@ -158,11 +158,11 @@ router.post("/api/collection/create", middleware_authenticate_token, authorize_p
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/api/collection/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), editCollection);
+router.post("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), editCollection);
 
 /**
  * @swagger
- * /api/collection/delete:
+ * /api/v1/collection/delete:
  *   post:
  *     summary: Delete a quiz collection
  *     description: Delete a quiz collection from the database. Only the owner or a user with DELETE_COLLECTION permission can perform this action.
@@ -226,18 +226,18 @@ router.post("/api/collection/edit", middleware_authenticate_token, authorize_per
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/api/collection/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
+router.post("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
 
-/*
-router.get("/api/collections/id/:id", getCollectionsByID);
+
+router.get("/id/:id", getCollectionsByID);
 
 // ? Receive { ownername }, get all collections of a specific user, including questions.
-router.get("/api/collections/owner/:ownername", getCollectionsByOwner);
-*/
+router.get("/owner/:ownername", getCollectionsByOwner);
+
 
 /**
  * @swagger
- * /api/collection/filter:
+ * /api/v1/collection/filter:
  *   post:
  *     summary: Get filtered quiz collections
  *     description: Retrieve quiz collections using a filter object in the body.
@@ -261,7 +261,9 @@ router.get("/api/collections/owner/:ownername", getCollectionsByOwner);
  *             schema:
  *               $ref: '#/components/schemas/QuizzCollection'
  */
-router.post("/filter", getCollections);
+router.get("/", getCollections);
+
+router.post("/filter", getCollectionsFiltered);
 
 
 export default router;

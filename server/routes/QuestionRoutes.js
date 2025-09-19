@@ -1,5 +1,5 @@
 import express from "express";
-import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestionsByOwner } from "../controllers/QuestionController.js";
+import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestions, getQuestionsByOwner } from "../controllers/QuestionController.js";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js";
 
@@ -7,7 +7,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/question/delete:
+ * /api/v1/question/delete:
  *   post:
  *     summary: Delete a question
  *     description: Delete a question from the database. Only the owner or an admin with DELETE_QUESTION permission can perform this action.
@@ -68,7 +68,7 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
 
 /**
  * @swagger
- * /api/question/edit:
+ * /api/v1/question/edit:
  *   post:
  *     summary: Edit a question
  *     description: Update a question in the database. Only the owner or an admin with EDIT_QUESTION permission can perform this action. 
@@ -140,7 +140,7 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
 
 /**
  * @swagger
- * /api/question/create:
+ * /api/v1/question/create:
  *   post:
  *     summary: Create a new question
  *     description: Create a new question in the database. Requires JWT and CREATE_QUESTION permission.
@@ -231,7 +231,7 @@ router.get("/id/:id", getQuestionByID);
 
 /**
  * @swagger
- * /api/question/:
+ * /api/v1/question:
  *   get:
  *     summary: Get all questions
  *     description: Retrieve all questions from the database.
@@ -293,6 +293,6 @@ router.get("/id/:id", getQuestionByID);
  *                     type: string
  *                     example: Invalid parameters
  */
-router.get("/", getQuestionByID);
+router.get("/", getQuestions);
 
 export default router;

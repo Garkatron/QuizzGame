@@ -1,7 +1,8 @@
 import { ERROR_MESSAGES } from "../constants.js";
-import { send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
+import { send_response_not_found, send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import { is_valid_string } from "../utils/format.js"
 import { user_exists } from "../controllers/UserController.js"
+import Question from "../models/Question.js";
 
 export const deleteQuestion = async (req, res) => {
     try {
@@ -16,7 +17,7 @@ export const deleteQuestion = async (req, res) => {
             const deleted = await question.deleteOne();
             return send_response_successful(res, "Question deleted successfully", deleted);
         } else {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.QUESTION_NOT_FOUND]);
+            return send_response_not_found(res, [ERROR_MESSAGES.QUESTION_NOT_FOUND]);
         }
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);
@@ -41,7 +42,7 @@ export const editQuestion = async (req, res) => {
             await question.updateOne({ [field]: value });
             return send_response_successful(res, "Question edited successfully", question);
         } else {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.QUESTION_NOT_FOUND]);
+            return send_response_not_found(res, [ERROR_MESSAGES.QUESTION_NOT_FOUND]);
         }
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);

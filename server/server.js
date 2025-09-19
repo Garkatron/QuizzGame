@@ -49,9 +49,9 @@ app.post('/', (req, res) => {
 app.use("/shared", express.static(path.join(__dirname, "../shared")));
 
 
-app.use("/api/user", userRoutes);
-app.use("/api/question", questionRoutes);
-app.use("/api/collection", collectionRoutes);
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/question", questionRoutes);
+app.use("/api/v1/collection", collectionRoutes);
 
 await connectDB();
 const server = http.createServer(app);

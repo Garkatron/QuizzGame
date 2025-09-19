@@ -1,7 +1,7 @@
 import { has_valid_email, has_valid_name, has_valid_password, is_valid_string } from "../utils/format.js";
 import { compare_password, hash_password } from "../utils/hashing.js";
 import { ERROR_MESSAGES, UserPermissions } from "../constants.js";
-import { send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
+import { send_response_created, send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import User from "../models/User.js";
 import { has_ownership_or_admin } from "../utils/utils.js";
 
@@ -12,7 +12,7 @@ export const registerUser = async (req, res) => {
         has_valid_name(name);
 
         const user = await User.findOne({ name });
-        if (user) throw new Error(ERROR_MESSAGES.USER_EXISTS);
+        if (user) return send_response_unsuccessful(res, ERROR_MESSAGES.USER_EXISTS);
 
         has_valid_email(email);
         await email_not_used(email);
@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
 
         await newUser.save();
 
-        return send_response_successful(res, "User created succefully", { _id: newUser._id, name: newUser.name, email: newUser.email })
+        return send_response_created(res, "User created succefully", { _id: newUser._id, name: newUser.name, email: newUser.email })
 
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);

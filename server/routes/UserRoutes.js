@@ -8,7 +8,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/user/register:
+ * /api/v1/user/register:
  *   post:
  *     summary: Register a new user
  *     description: Create a new user in the database with a unique email and a secure password.
@@ -64,7 +64,7 @@ router.post("/register", registerUser);
 
 /**
  * @swagger
- * /api/user/login:
+ * /api/v1/user/login:
  *   post:
  *     summary: Login a user
  *     description: Validate user credentials and return a JWT access token.
@@ -126,7 +126,7 @@ router.post("/login", loginUser);
 
 /**
  * @swagger
- * /api/user/delete:
+ * /api/v1/user/delete:
  *   post:
  *     summary: Delete a user
  *     description: Delete a user from the database. Only the account owner or an admin with DELETE_USER permission can perform this action.
@@ -186,7 +186,7 @@ router.post("/delete", middleware_authenticate_token, authorize_permissions([Use
 
 /**
  * @swagger
- * /api/user/edit:
+ * /api/v1/user/edit:
  *   post:
  *     summary: Edit a user
  *     description: Update the name, email, or password of a user. Only the account owner or an admin with EDIT_USER permission can perform this action.
@@ -255,7 +255,7 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
 
 /**
  * @swagger
- * /api/user/users:
+ * /api/v1/user:
  *   get:
  *     summary: Get all users
  *     description: Retrieve an array of all users from the database.
@@ -308,6 +308,6 @@ router.post("/edit", middleware_authenticate_token, authorize_permissions([UserP
  *                     type: string
  *                     example: Invalid parameters
  */
-router.get("/users", getUsers);
+router.get("/", getUsers);
 
 export default router;
