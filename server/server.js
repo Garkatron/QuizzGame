@@ -17,7 +17,7 @@ const swaggerOptions = {
     definition: {
         openapi: "3.0.0",
         info: {
-            title: "My API",
+            title: "Quizz Api",
             version: "1.0.0"
         }
     },

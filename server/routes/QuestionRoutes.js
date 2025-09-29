@@ -2,6 +2,8 @@ import express from "express";
 import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestions, getQuestionsByOwner } from "../controllers/QuestionController.js";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js";
+import { handle_validation_errors } from './../middleware/sanitization.js';
+import { body } from "express-validator";
 
 const router = express.Router();
 
@@ -64,7 +66,9 @@ const router = express.Router();
  *                     type: string
  *                     example: Invalid parameters
  */
-router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]), deleteQuestion);
+router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_QUESTION]),
+    body("id").trim().escape(),
+    handle_validation_errors, deleteQuestion);
 
 /**
  * @swagger
@@ -136,7 +140,12 @@ router.delete("/delete", middleware_authenticate_token, authorize_permissions([U
  *                     type: string
  *                     example: Invalid parameters
  */
-router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]), editQuestion);
+router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_QUESTION]),
+
+    body("id").trim().escape(),
+    body("field").trim().escape(),
+    body("value").trim().escape(),
+    handle_validation_errors, editQuestion);
 
 /**
  * @swagger
@@ -221,7 +230,13 @@ router.patch("/edit", middleware_authenticate_token, authorize_permissions([User
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_QUESTION]), createQuestion);
+router.post("/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_QUESTION]),
+
+    body("user_name").trim().escape(),
+    body("question_text").trim().escape(),
+    body("options").isArray(),
+    body("answer").isArray(),
+    body("tags").isArray(), handle_validation_errors, createQuestion);
 
 // ? Receive { ownername }, get all questions created by a specific user.
 router.get("/owner/:ownername", getQuestionsByOwner);

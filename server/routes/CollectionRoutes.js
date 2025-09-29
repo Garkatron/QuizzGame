@@ -2,7 +2,8 @@ import express from "express";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js"
 import { createCollection, deleteCollection, editCollection, getCollections, getCollectionsByID, getCollectionsByOwner, getCollectionsFiltered } from "../controllers/CollectionController.js";
-
+import { body } from "express-validator";
+import { handle_validation_errors } from './../middleware/sanitization.js';
 const router = express.Router();
 
 /**
@@ -78,7 +79,11 @@ const router = express.Router();
  *                     type: string
  *                     example: Invalid parameters
  */
-router.post("/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]), createCollection);
+router.post("/create", middleware_authenticate_token, authorize_permissions([UserPermissions.CREATE_COLLECTION]),
+    body("name").trim().escape(),
+    body("tags").isArray().withMessage("Tags will be an Array"),
+    body("questions").isArray().withMessage("Questios will be an Array")
+, handle_validation_errors, createCollection);
 
 /**
  * @swagger
@@ -158,7 +163,13 @@ router.post("/create", middleware_authenticate_token, authorize_permissions([Use
  *                     type: string
  *                     example: Invalid parameters
  */
-router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]), editCollection);
+router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_COLLECTION]),
+    body("collection_id").trim().escape(),
+    body("name").trim().escape(),
+    body("tags").isArray().withMessage("Tags will be an Array"),
+    body("questions").isArray().withMessage("Questios will be an Array")
+,
+handle_validation_errors, editCollection);
 
 /**
  * @swagger
@@ -226,7 +237,8 @@ router.patch("/edit", middleware_authenticate_token, authorize_permissions([User
  *                     type: string
  *                     example: Invalid parameters
  */
-router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]), deleteCollection);
+router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_COLLECTION]),
+    body("id").trim().escape().isNumeric(), handle_validation_errors, deleteCollection);
 
 router.get("/id/:id", getCollectionsByID);
 

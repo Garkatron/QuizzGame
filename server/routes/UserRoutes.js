@@ -3,6 +3,8 @@ import { authorize_permissions, middleware_authenticate_token } from "../middlew
 import { UserPermissions } from "../constants.js"
 
 import { deleteUser, editUser, getUsers, loginUser, registerUser } from "../controllers/UserController.js";
+import { body } from "express-validator";
+import { handle_validation_errors } from './../middleware/sanitization.js';
 
 const router = express.Router();
 
@@ -91,7 +93,7 @@ const router = express.Router();
  *                   type: string
  *                   example: Unexpected server error
  */
-router.post("/register", registerUser);
+router.post("/register", body("name").trim().escape(), body("email").trim().escape().normalizeEmail(), body("password").trim(), handle_validation_errors, registerUser);
 
 /**
  * @swagger
@@ -178,7 +180,7 @@ router.post("/register", registerUser);
  *                   type: string
  *                   example: Invalid username or password
  */
-router.post("/login", loginUser);
+router.post("/login", body("name").trim().escape(), body("password").trim(), handle_validation_errors, loginUser);
 
 /**
  * @swagger
@@ -268,7 +270,7 @@ router.post("/login", loginUser);
  *                   type: string
  *                   example: Unauthorized
  */
-router.delete("/delete", middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), deleteUser);
+router.delete("/delete", body("name").trim().escape(), handle_validation_errors, middleware_authenticate_token, authorize_permissions([UserPermissions.DELETE_USER]), deleteUser);
 
 /**
  * @swagger
@@ -370,7 +372,12 @@ router.delete("/delete", middleware_authenticate_token, authorize_permissions([U
  *                   type: string
  *                   example: Unauthorized
  */
-router.patch("/edit", middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), editUser);
+router.patch("/edit", 
+    body("previousName").trim().escape(),
+    body("newName").trim().escape(),
+    body("newEmail").trim().normalizeEmail(),
+    body("newPassword").trim().escape(), handle_validation_errors,
+    middleware_authenticate_token, authorize_permissions([UserPermissions.EDIT_USER]), editUser);
 
 /**
  * @swagger
