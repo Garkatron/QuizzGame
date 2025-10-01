@@ -1,5 +1,5 @@
 import express from "express";
-import { createQuestion, deleteQuestion, editQuestion, getQuestionByID, getQuestions, getQuestionsByOwner } from "../controllers/QuestionController.js";
+import { createQuestion, deleteQuestion, editQuestion, getQuestions } from "../controllers/QuestionController.js";
 import { authorize_permissions, middleware_authenticate_token } from "../middleware/auth.js";
 import { UserPermissions } from "../constants.js";
 import { handle_validation_errors } from './../middleware/sanitization.js';
@@ -22,7 +22,7 @@ router.post("/", middleware_authenticate_token, authorize_permissions([UserPermi
 
     body("question_text").trim().escape(),
     body("options").isArray(),
-    body("answer").trim.escape(),
+    body("answer").trim().escape(),
     body("tags").isArray(), handle_validation_errors, createQuestion);
 
 
