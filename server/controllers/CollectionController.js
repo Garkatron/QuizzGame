@@ -2,7 +2,6 @@ import QuizzCollection from "../models/QuizzCollection.js";
 import Question from "../models/Question.js";
 import { send_response_created, send_response_not_found, send_response_successful, send_response_unsuccessful } from "../utils/responses.js"
 import { ERROR_MESSAGES } from "../constants.js";
-import { is_valid_string } from "../utils/format.js";
 import { has_ownership_or_admin } from "../utils/utils.js";
 import { user_exists } from "../controllers/UserController.js";
 import { sanitize } from "../utils/sanitize.js";
@@ -10,16 +9,6 @@ import { sanitize } from "../utils/sanitize.js";
 export const createCollection = async (req, res) => {
     try {
         const { name, tags, questions } = req.body;
-
-        if (!is_valid_string(name)) {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_STRING]);
-        }
-        if (!Array.isArray(tags)) {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_TAGS_ARRAY]);
-        }
-        if (!Array.isArray(questions)) {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_QUESTIONS_ARRAY]);
-        }
 
         const user = await user_exists({ name: req.user.name });
         const existing = await QuizzCollection.findOne({ name, owner: user._id });
@@ -39,15 +28,12 @@ export const createCollection = async (req, res) => {
 
 export const editCollection = async (req, res) => {
     try {
-        const { collection_id, name, tags, questions } = req.body;
+        const { id } = req.params;
+        const { name, tags, questions } = req.body;
 
         const user = await user_exists({ name: req.user.name });
 
-        if (!collection_id) {
-            return send_response_unsuccessful(res, [ERROR_MESSAGES.MISSING_PARAMETERS]);
-        }
-
-        const collection = await QuizzCollection.findOne({ _id: collection_id, owner: user._id });
+        const collection = await QuizzCollection.findOne({ _id: id, owner: user._id });
         if (!collection) {
             return send_response_not_found(res, [ERROR_MESSAGES.COLLECTION_NOT_FOUND]);
         }
@@ -76,7 +62,7 @@ export const editCollection = async (req, res) => {
 
 export const deleteCollection = async (req, res) => {
     try {
-        const { id } = req.body;
+        const { id } = req.params;
 
         const user = await user_exists({ name: req.user.name });
 
@@ -120,7 +106,6 @@ export const getCollectionsFiltered = async (req, res) => {
     }
 }
 
-
 export const getCollectionsByID = async (req, res) => {
     try {
         const { id } = req.params;
@@ -135,7 +120,6 @@ export const getCollectionsByID = async (req, res) => {
 
 export const getCollectionsByOwner = async (req, res) => {
     try {
-
         const { ownername } = req.params;
 
         const user = await user_exists({ name: ownername });
@@ -144,7 +128,6 @@ export const getCollectionsByOwner = async (req, res) => {
         return send_response_successful(res, "Quizz Collections", quizzCollections);
     } catch (error) {
         return send_response_unsuccessful(res, [error.message]);
-
     }
 }
 
@@ -171,3 +154,17 @@ export const getCollections = async (req, res) => {
     }
 }
 
+
+        // if (!is_valid_string(name)) {
+        //     return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_STRING]);
+        // }
+        // if (!Array.isArray(tags)) {
+        //     return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_TAGS_ARRAY]);
+        // }
+        // if (!Array.isArray(questions)) {
+        //     return send_response_unsuccessful(res, [ERROR_MESSAGES.INVALID_QUESTIONS_ARRAY]);
+        // }
+
+               // if (!collection_id) {
+        //     return send_response_unsuccessful(res, [ERROR_MESSAGES.MISSING_PARAMETERS]);
+        // }

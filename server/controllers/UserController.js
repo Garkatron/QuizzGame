@@ -73,12 +73,12 @@ export const loginUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { id } = req.params;
 
-        has_valid_name(name);
+        // has_valid_name(name);
 
         const user = await user_exists({ name: req.user.name });
-        const userToDelete = await user_exists({ name });
+        const userToDelete = await user_exists({ id });
 
         has_ownership_or_admin(user, userToDelete._id);
 
@@ -93,26 +93,25 @@ export const deleteUser = async (req, res) => {
 
 export const editUser = async (req, res) => {
     try {
-        const { previousName, newName, newEmail, newPassword } = req.body;
+        const { id } = req.params;
+        const { newName, newEmail, newPassword } = req.body;
 
-        const userToUpdate = await user_exists({ name: previousName });
+        const userToUpdate = await user_exists({ id });
         const editor = await user_exists({ name: req.user.name });
 
         has_ownership_or_admin(editor, userToUpdate._id);
 
         const updates = {};
 
-        if (newName?.trim() && is_valid_string(newName)) {
+        if (newName) {
             updates.name = newName.trim();
         }
 
-        if (newEmail?.trim()) {
-            has_valid_email(newEmail);
+        if (newEmail) {
             updates.email = newEmail.trim();
         }
 
-        if (newPassword?.trim()) {
-            has_valid_password(newPassword);
+        if (newPassword) {
             const hashed = await hash_password(newPassword);
             updates.password = hashed;
         }
